@@ -26,6 +26,7 @@ file(
 SET(
 	PLUGIN_QOBJECT_FILES
 	${PLUGIN_ROOT_DIR}/include/surface_generationCage.h
+	${PLUGIN_ROOT_DIR}/include/dialog_generationCage.h
 )
 
 include( ${SCHNApps_ROOT_DIR}/Plugins/plugins_cmake.txt )

@@ -1,7 +1,9 @@
-#ifndef _SURFACE_DIFFERENTIALPROPERTIES_PLUGIN_H_
-#define _SURFACE_DIFFERENTIALPROPERTIES_PLUGIN_H_
+#ifndef _SURFACE_GENERATIONCAGE_PLUGIN_H_
+#define _SURFACE_GENERATIONCAGE_PLUGIN_H_
 
 #include "plugin_processing.h"
+
+#include "dialog_generationCage.h"
 
 namespace CGoGN
 {
@@ -29,9 +31,13 @@ private slots:
 	void mapRemoved(MapHandlerGen* map);
     void attributeModified(unsigned int orbit, QString nameAttr);
 
-public slots:
-private:
+    void openGenerationCageDialog();
+    void generationCageFromDialog();
 
+    void generationCage();
+private:
+    Dialog_GenerationCage* m_generationCageDialog;
+    QAction* m_generationCageAction;
 };
 
 } // namespace SCHNApps
