@@ -33,8 +33,12 @@ private slots:
 
     void openGenerationCageDialog();
     void generationCageFromDialog();
+    void dilaterVoxellisationFromDialog();
 
-    void generationCage();
+    void generationCage(const QString& mapName, const QString& positionAttributeName);
+    void dilaterVoxellisation(const QString& mapName);
+
+    void calculateResolutions(const QString& mapName);
 private:
     Dialog_GenerationCage* m_generationCageDialog;
     QAction* m_generationCageAction;
