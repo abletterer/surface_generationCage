@@ -39,7 +39,10 @@
     </layout>
    </item>
    <item>
-    <widget class="QGroupBox" name="groupBox">
+    <widget class="QGroupBox" name="group_dilate">
+     <property name="enabled">
+      <bool>false</bool>
+     </property>
      <property name="title">
       <string>Dilation management</string>
      </property>
@@ -112,48 +115,61 @@
     </widget>
    </item>
    <item>
-    <widget class="QGroupBox" name="groupBox_2">
+    <widget class="QGroupBox" name="group_generate">
+     <property name="enabled">
+      <bool>false</bool>
+     </property>
      <property name="title">
       <string>Surface generation</string>
      </property>
-     <layout class="QHBoxLayout" name="horizontalLayout">
+     <layout class="QVBoxLayout" name="verticalLayout">
       <item>
-       <widget class="QRadioButton" name="radio_extractionFaces">
-        <property name="text">
-         <string>Face extraction</string>
-        </property>
-        <property name="checked">
-         <bool>true</bool>
-        </property>
-       </widget>
+       <layout class="QHBoxLayout" name="horizontalLayout_5">
+        <item>
+         <widget class="QRadioButton" name="radio_extractionFaces">
+          <property name="text">
+           <string>Face extraction</string>
+          </property>
+          <property name="checked">
+           <bool>true</bool>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QRadioButton" name="radio_marchingCube">
+          <property name="text">
+           <string>Marching cube</string>
+          </property>
+         </widget>
+        </item>
+       </layout>
       </item>
       <item>
-       <widget class="QRadioButton" name="radio_marchingCube">
-        <property name="text">
-         <string>Marching cube</string>
-        </property>
-       </widget>
+       <layout class="QHBoxLayout" name="horizontalLayout_4">
+        <item>
+         <widget class="QPushButton" name="button_generate">
+          <property name="enabled">
+           <bool>false</bool>
+          </property>
+          <property name="text">
+           <string>Generate</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QPushButton" name="button_close">
+          <property name="enabled">
+           <bool>false</bool>
+          </property>
+          <property name="text">
+           <string>Close</string>
+          </property>
+         </widget>
+        </item>
+       </layout>
       </item>
      </layout>
     </widget>
-   </item>
-   <item>
-    <layout class="QHBoxLayout" name="horizontalLayout_3">
-     <item>
-      <widget class="QPushButton" name="button_generate">
-       <property name="text">
-        <string>Generate</string>
-       </property>
-      </widget>
-     </item>
-     <item>
-      <widget class="QPushButton" name="button_close">
-       <property name="text">
-        <string>Close</string>
-       </property>
-      </widget>
-     </item>
-    </layout>
    </item>
   </layout>
  </widget>
@@ -163,8 +179,6 @@
   <tabstop>button_dilaterVoxellisation</tabstop>
   <tabstop>button_reinitialiserVoxellisation</tabstop>
   <tabstop>line_niveauDilatation</tabstop>
-  <tabstop>button_generate</tabstop>
-  <tabstop>button_close</tabstop>
  </tabstops>
  <resources/>
  <connections>

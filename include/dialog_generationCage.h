@@ -25,6 +25,7 @@ private:
 
 public slots:
     void selectedMapChanged();
+    void selectedPositionAttributeChanged(QString positionName);
     void addMapToList(MapHandlerGen* m);
     void removeMapFromList(MapHandlerGen* m);
     void addAttributeToList(unsigned int orbit, const QString& nameAttr);

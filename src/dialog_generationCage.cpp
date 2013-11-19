@@ -19,6 +19,7 @@ Dialog_GenerationCage::Dialog_GenerationCage(SCHNApps* s) :
     connect(m_schnapps, SIGNAL(mapRemoved(MapHandlerGen*)), this, SLOT(removeMapFromList(MapHandlerGen*)));
 
     connect(list_maps, SIGNAL(itemSelectionChanged()), this, SLOT(selectedMapChanged()));
+    connect(combo_positionAttribute, SIGNAL(currentIndexChanged(QString)), this, SLOT(selectedPositionAttributeChanged(QString)));
 
     foreach(MapHandlerGen* map,  m_schnapps->getMapSet().values())
     {
@@ -55,9 +56,16 @@ void Dialog_GenerationCage::selectedMapChanged()
 
         m_selectedMap = mh;
         connect(m_selectedMap, SIGNAL(attributeAdded(unsigned int, const QString&)), this, SLOT(addAttributeToList(unsigned int, const QString&)));
+        group_dilate->setEnabled(false);
+        button_generate->setEnabled(false);
     }
     else
         m_selectedMap = NULL;
+}
+
+void Dialog_GenerationCage::selectedPositionAttributeChanged(QString nameAttr) {
+    group_dilate->setEnabled(false);
+    group_generate->setEnabled(true);
 }
 
 void Dialog_GenerationCage::addMapToList(MapHandlerGen* m)
@@ -76,6 +84,9 @@ void Dialog_GenerationCage::removeMapFromList(MapHandlerGen* m)
     {
         disconnect(m_selectedMap, SIGNAL(attributeAdded(unsigned int, const QString&)), this, SLOT(addAttributeToList(unsigned int, const QString&)));
         m_selectedMap = NULL;
+        group_dilate->setEnabled(false);
+        group_generate->setEnabled(false);
+        button_close->setEnabled(true);
     }
 }
 

@@ -100,7 +100,8 @@ void Surface_GenerationCage_Plugin::generationCage(const QString& mapName, const
 }
 
 void Surface_GenerationCage_Plugin::dilaterVoxellisation(const QString& mapName) {
-
+    if(m_generationCageDialog->group_dilate->isEnabled()) {
+    }
 }
 
 void Surface_GenerationCage_Plugin::calculateResolutions(const QString& mapName) {
