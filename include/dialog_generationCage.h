@@ -19,9 +19,14 @@ class Dialog_GenerationCage : public QDialog, public Ui::Dialog_GenerationCage
 public:
     Dialog_GenerationCage(SCHNApps* s);
 
+    bool isAttributePositionChanged() { return m_attributePositionChanged; }
+    void setAttributePositionChanged(bool changed) { m_attributePositionChanged = changed; }
+
 private:
     SCHNApps* m_schnapps;
     MapHandlerGen* m_selectedMap;
+
+    bool m_attributePositionChanged;
 
 public slots:
     void selectedMapChanged();

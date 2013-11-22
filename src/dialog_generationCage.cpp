@@ -56,16 +56,13 @@ void Dialog_GenerationCage::selectedMapChanged()
 
         m_selectedMap = mh;
         connect(m_selectedMap, SIGNAL(attributeAdded(unsigned int, const QString&)), this, SLOT(addAttributeToList(unsigned int, const QString&)));
-        group_dilate->setEnabled(false);
-        button_generate->setEnabled(false);
     }
     else
         m_selectedMap = NULL;
 }
 
 void Dialog_GenerationCage::selectedPositionAttributeChanged(QString nameAttr) {
-    group_dilate->setEnabled(false);
-    group_generate->setEnabled(true);
+    m_attributePositionChanged = true;
 }
 
 void Dialog_GenerationCage::addMapToList(MapHandlerGen* m)
@@ -84,9 +81,6 @@ void Dialog_GenerationCage::removeMapFromList(MapHandlerGen* m)
     {
         disconnect(m_selectedMap, SIGNAL(attributeAdded(unsigned int, const QString&)), this, SLOT(addAttributeToList(unsigned int, const QString&)));
         m_selectedMap = NULL;
-        group_dilate->setEnabled(false);
-        group_generate->setEnabled(false);
-        button_close->setEnabled(true);
     }
 }
 
@@ -97,7 +91,7 @@ void Dialog_GenerationCage::addAttributeToList(unsigned int orbit, const QString
     const QString& typeAttr = m_selectedMap->getAttributeTypeName(orbit, nameAttr);
 
     if(typeAttr == vec3TypeName)
-    {
+    {   //On n'ajoute l'élment que s'il est de type Vec3 => C'est-à-dire s'il peut être interprêté comme un point
         combo_positionAttribute->addItem(nameAttr);
     }
 }

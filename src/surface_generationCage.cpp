@@ -53,7 +53,10 @@ void Surface_GenerationCage_Plugin::mapRemoved(MapHandlerGen *map)
 
 void Surface_GenerationCage_Plugin::attributeModified(unsigned int orbit, QString nameAttr)
 {
-    //Rien pour le moment
+    if(nameAttr==m_generationCageDialog->combo_positionAttribute->currentText()) {
+        //Si l'attribut modifié correspond à celui utilisé actuellement pour réaliser les calculs
+        m_generationCageDialog->setAttributePositionChanged(true);
+    }
 }
 
 void Surface_GenerationCage_Plugin::openGenerationCageDialog()
@@ -91,6 +94,9 @@ void Surface_GenerationCage_Plugin::dilaterVoxellisationFromDialog() {
 }
 
 void Surface_GenerationCage_Plugin::generationCage(const QString& mapName, const QString& positionAttributeName) {
+    if(m_generationCageDialog->isAttributePositionChanged()) {
+        //Si depuis les derniers traitements l'attribut de position a été modifié
+    }
     if(m_generationCageDialog->radio_extractionFaces->isChecked()) {
         //Si l'algorithme choisi est celui de l'extraction de faces
     }
@@ -100,7 +106,9 @@ void Surface_GenerationCage_Plugin::generationCage(const QString& mapName, const
 }
 
 void Surface_GenerationCage_Plugin::dilaterVoxellisation(const QString& mapName) {
-    if(m_generationCageDialog->group_dilate->isEnabled()) {
+    if(m_generationCageDialog->isAttributePositionChanged()) {
+        //Si depuis les derniers traitements l'attribut de position a été modifié
+        m_generationCageDialog->setAttributePositionChanged(false);
     }
 }
 
