@@ -12,7 +12,7 @@ namespace SCHNApps
 Dialog_GenerationCage::Dialog_GenerationCage(SCHNApps* s) :
     m_schnapps(s),
     m_selectedMap(NULL),
-    m_attributePositionChanged(true)
+    m_voxellisationNeeded(true)
 {
     setupUi(this);
 
@@ -21,11 +21,48 @@ Dialog_GenerationCage::Dialog_GenerationCage(SCHNApps* s) :
 
     connect(list_maps, SIGNAL(itemSelectionChanged()), this, SLOT(selectedMapChanged()));
     connect(combo_positionAttribute, SIGNAL(currentIndexChanged(QString)), this, SLOT(selectedPositionAttributeChanged(QString)));
+    connect(check_resolution, SIGNAL(toggled(bool)), this, SLOT(resolutionTriggered(bool)));
+
+    connect(spin_resolution_x, SIGNAL(editingFinished()), this, SLOT(resolutionChanged()));
+    connect(spin_resolution_y, SIGNAL(editingFinished()), this, SLOT(resolutionChanged()));
+    connect(spin_resolution_z, SIGNAL(editingFinished()), this, SLOT(resolutionChanged()));
 
     foreach(MapHandlerGen* map,  m_schnapps->getMapSet().values())
     {
         QListWidgetItem* item = new QListWidgetItem(map->getName(), list_maps);
         item->setCheckState(Qt::Unchecked);
+    }
+}
+
+void Dialog_GenerationCage::addMapToList(MapHandlerGen* m)
+{
+    QListWidgetItem* item = new QListWidgetItem(m->getName(), list_maps);
+    item->setCheckState(Qt::Unchecked);
+}
+
+void Dialog_GenerationCage::removeMapFromList(MapHandlerGen* m)
+{
+    QList<QListWidgetItem*> items = list_maps->findItems(m->getName(), Qt::MatchExactly);
+    if(!items.empty())
+        delete items[0];
+
+    if(m_selectedMap == m)
+    {
+        disconnect(m_selectedMap, SIGNAL(attributeAdded(unsigned int, const QString&)), this, SLOT(addAttributeToList(unsigned int, const QString&)));
+        m_selectedMap = NULL;
+    }
+}
+
+void Dialog_GenerationCage::addAttributeToList(unsigned int orbit, const QString& nameAttr)
+{
+    QString vec3TypeName = QString::fromStdString(nameOfType(PFP2::VEC3()));
+
+    const QString& typeAttr = m_selectedMap->getAttributeTypeName(orbit, nameAttr);
+
+    if(typeAttr == vec3TypeName)
+    {   //On n'ajoute l'élment que s'il est de type Vec3
+        //C'est-à-dire s'il peut être interprêté comme un point
+        combo_positionAttribute->addItem(nameAttr);
     }
 }
 
@@ -63,39 +100,24 @@ void Dialog_GenerationCage::selectedMapChanged()
 }
 
 void Dialog_GenerationCage::selectedPositionAttributeChanged(QString nameAttr) {
-    m_attributePositionChanged = true;
+    m_voxellisationNeeded = true;
 }
 
-void Dialog_GenerationCage::addMapToList(MapHandlerGen* m)
-{
-    QListWidgetItem* item = new QListWidgetItem(m->getName(), list_maps);
-    item->setCheckState(Qt::Unchecked);
-}
-
-void Dialog_GenerationCage::removeMapFromList(MapHandlerGen* m)
-{
-    QList<QListWidgetItem*> items = list_maps->findItems(m->getName(), Qt::MatchExactly);
-    if(!items.empty())
-        delete items[0];
-
-    if(m_selectedMap == m)
-    {
-        disconnect(m_selectedMap, SIGNAL(attributeAdded(unsigned int, const QString&)), this, SLOT(addAttributeToList(unsigned int, const QString&)));
-        m_selectedMap = NULL;
+void Dialog_GenerationCage::resolutionTriggered(bool b) {
+    if(b) {
+        //Les résolutions sont définies indépendamment les unes des autres
+        spin_resolution_y->setEnabled(true);
+        spin_resolution_z->setEnabled(true);
+    }
+    else {
+        //Les résolutions sont définies en fonction de celle en x
+        spin_resolution_y->setEnabled(false);
+        spin_resolution_z->setEnabled(false);
     }
 }
 
-void Dialog_GenerationCage::addAttributeToList(unsigned int orbit, const QString& nameAttr)
-{
-    QString vec3TypeName = QString::fromStdString(nameOfType(PFP2::VEC3()));
-
-    const QString& typeAttr = m_selectedMap->getAttributeTypeName(orbit, nameAttr);
-
-    if(typeAttr == vec3TypeName)
-    {   //On n'ajoute l'élment que s'il est de type Vec3
-        //C'est-à-dire s'il peut être interprêté comme un point
-        combo_positionAttribute->addItem(nameAttr);
-    }
+void Dialog_GenerationCage::resolutionChanged() {
+    m_voxellisationNeeded = true;
 }
 
 } // namespace SCHNApps

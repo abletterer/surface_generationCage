@@ -42,8 +42,8 @@ private slots:
     void generationCage(const QString& mapName, const QString& positionAttributeName);
     void dilaterVoxellisation(const QString& mapName, const QString& positionAttributeName);
 
-    Geom::Vec3i& calculateResolutions(const Geom::BoundingBox<PFP2::VEC3>& bb);
-    Geom::Vec3i& updateResolutions(int res_x, const Geom::BoundingBox<PFP2::VEC3>& bb);
+    void calculateResolutions(const Geom::BoundingBox<PFP2::VEC3>& bb, bool first=true);
+    Geom::Vec3i& updateResolutions(const Geom::BoundingBox<PFP2::VEC3>& bb, bool independant=false);
 
     void voxellise();
 
@@ -52,6 +52,9 @@ private:
     Dialog_GenerationCage* m_generationCageDialog;
     QAction* m_generationCageAction;
     Algo::Surface::Modelisation::Voxellisation* m_voxellisation;
+    Geom::Vec3i* m_resolutions;
+
+    bool m_voxellisationNeeded;
 };
 
 } // namespace SCHNApps

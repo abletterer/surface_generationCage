@@ -16,6 +16,8 @@ bool Surface_GenerationCage_Plugin::enable()
 
     m_voxellisation = new Algo::Surface::Modelisation::Voxellisation();
 
+    m_resolutions = new Geom::Vec3i();
+
     m_schnapps->addMenuAction(this, "Surface;Generate cage", m_generationCageAction);
 
     connect(m_generationCageAction, SIGNAL(triggered()), this, SLOT(openGenerationCageDialog()));
@@ -25,6 +27,8 @@ bool Surface_GenerationCage_Plugin::enable()
 
     connect(m_schnapps, SIGNAL(mapAdded(MapHandlerGen*)), this, SLOT(mapAdded(MapHandlerGen*)));
     connect(m_schnapps, SIGNAL(mapRemoved(MapHandlerGen*)), this, SLOT(mapRemoved(MapHandlerGen*)));
+
+    connect(m_generationCageDialog->button_dilaterVoxellisation, SIGNAL(clicked()), this, SLOT(dilaterVoxellisationFromDialog()));
 
     foreach(MapHandlerGen* map, m_schnapps->getMapSet().values())
         mapAdded(map);
@@ -57,7 +61,7 @@ void Surface_GenerationCage_Plugin::attributeModified(unsigned int orbit, QStrin
 {
     if(nameAttr == m_generationCageDialog->combo_positionAttribute->currentText()) {
         //Si l'attribut modifié correspond à celui utilisé actuellement pour réaliser les calculs
-        m_generationCageDialog->setAttributePositionChanged(true);
+        m_generationCageDialog->setVoxellisationNeeded(true);
     }
 }
 
@@ -96,8 +100,9 @@ void Surface_GenerationCage_Plugin::dilaterVoxellisationFromDialog() {
 }
 
 void Surface_GenerationCage_Plugin::generationCage(const QString& mapName, const QString& positionAttributeName) {
-    if(m_generationCageDialog->isAttributePositionChanged()) {
-        //Si depuis les derniers traitements l'attribut de position a été modifié
+    if(m_generationCageDialog->isVoxellisationNeeded()) {
+        //Si des changements nécessitant une nouvelle voxellisation sont nécessaires
+        m_generationCageDialog->setVoxellisationNeeded(false);
     }
     if(m_generationCageDialog->radio_extractionFaces->isChecked()) {
         //Si l'algorithme choisi est celui de l'extraction de faces
@@ -108,73 +113,85 @@ void Surface_GenerationCage_Plugin::generationCage(const QString& mapName, const
 }
 
 void Surface_GenerationCage_Plugin::dilaterVoxellisation(const QString& mapName, const QString& positionAttributeName) {
-    if(m_generationCageDialog->isAttributePositionChanged()) {
+    if(m_generationCageDialog->isVoxellisationNeeded()) {
         //Si depuis les derniers traitements l'attribut de position a été modifié
-        m_generationCageDialog->setAttributePositionChanged(false);
+        m_generationCageDialog->setVoxellisationNeeded(false);
     }
 }
 
-Geom::Vec3i& Surface_GenerationCage_Plugin::calculateResolutions(const Geom::BoundingBox<PFP2::VEC3>& bb) {
-    MapHandler<PFP2>* mh = static_cast<MapHandler<PFP2>*>(m_schnapps->getSelectedMap());
-    PFP2::MAP* selectedMap = mh->getMap();
+void Surface_GenerationCage_Plugin::calculateResolutions(const Geom::BoundingBox<PFP2::VEC3>& bb, bool first) {
+    if(first) {
+        MapHandler<PFP2>* mh = static_cast<MapHandler<PFP2>*>(m_schnapps->getSelectedMap());
+        PFP2::MAP* selectedMap = mh->getMap();
 
-    Geom::Vec3f bb_min = bb.min();
-    Geom::Vec3f bb_max = bb.max();
+        Geom::Vec3f bb_min = bb.min();
+        Geom::Vec3f bb_max = bb.max();
 
-    Geom::Vec3i* resolutions = new Geom::Vec3i();
+        const float SPARSE_FACTOR=0.05f;
 
-    const float SPARSE_FACTOR=0.05f;
+        //Résolution calculée avec la méthode de "Automatic Generation of Coarse Bounding Cages from Dense Meshes"
+        int n = std::sqrt((selectedMap->getNbCells(VERTEX))*SPARSE_FACTOR/6);
 
-    //Résolution calculée avec la méthode de "Automatic Generation of Coarse Bounding Cages from Dense Meshes"
-    int n = std::sqrt((selectedMap->getNbCells(VERTEX))*SPARSE_FACTOR/6);
+        Algo::Surface::Modelisation::swapVectorMax(bb_min, bb_max);
 
-    Algo::Surface::Modelisation::swapVectorMax(bb_min, bb_max);
+        float delta_x = bb_max[0]-bb_min[0];
+        float delta_y = bb_max[1]-bb_min[1];
+        float delta_z = bb_max[2]-bb_min[2];
 
-    float delta_x = bb_max[0]-bb_min[0];
-    float delta_y = bb_max[1]-bb_min[1];
-    float delta_z = bb_max[2]-bb_min[2];
+        float max = std::max(std::max(delta_x, delta_y), delta_z);  //On récupère la composante qui a l'écart maximum
 
-    float max = std::max(std::max(delta_x, delta_y), delta_z);  //On récupère la composante qui a l'écart maximum
+        //On adapte la résolution calculée pour qu'elle soit différente dans chacune des composantes x, y et z
+        do {
+            //On recalcule les résolutions jusqu'à ce que chacune d'entre elle ne soit plus nulle
+            m_resolutions[0] = n*delta_x/max;
+            m_resolutions[1] = n*delta_y/max;
+            m_resolutions[2] = n*delta_z/max;
+            n+=5;
+        } while(m_resolutions[0]==0 || m_resolutions[1]==0 || m_resolutions[2]==0);
 
-    //On adapte la résolution calculée pour qu'elle soit différente dans chacune des composantes x, y et z
-    do {
-        //On recalcule les résolutions jusqu'à ce que chacune d'entre elle ne soit plus nulle
-        resolutions[0] = n*delta_x/max;
-        resolutions[1] = n*delta_y/max;
-        resolutions[2] = n*delta_z/max;
-        n+=5;
-    } while(resolutions[0]==0 || resolutions[1]==0 || resolutions[2]==0);
-
-    CGoGNout << "Initialisation des résolutions : Résolution en x = " << resolutions[0] << " | Résolution en y = "<< resolutions[1] << " | Résolution en z = " << resolutions[2] << CGoGNendl;
-
-    return *resolutions;
+        CGoGNout << "Initialisation des résolutions : Résolution en x = " << m_resolutions[0] << " | Résolution en y = "<< m_resolutions[1] << " | Résolution en z = " << m_resolutions[2] << CGoGNendl;
+    }
 }
 
 /*
   * Fonction qui met à jour les résolutions dans chacun des composantes en fonction de la valeur choisie en x
   */
-Geom::Vec3i& Surface_GenerationCage_Plugin::updateResolutions(int res_x, const Geom::BoundingBox<PFP2::VEC3>& bb) {
+Geom::Vec3i& Surface_GenerationCage_Plugin::updateResolutions(const Geom::BoundingBox<PFP2::VEC3> &bb, bool independant) {
     Geom::Vec3i* resolutions  = new Geom::Vec3i();
-    Geom::Vec3f bb_min = bb.min();
-    Geom::Vec3f bb_max = bb.max();
 
-    Algo::Surface::Modelisation::swapVectorMax(bb_min, bb_max);
+    if(!independant) {
+        //Si les coordonnées sont calculées de façon indépendante
+        Geom::Vec3f bb_min = bb.min();
+        Geom::Vec3f bb_max = bb.max();
 
-    float delta_x = bb_max[0]-bb_min[0];
-    float delta_y = bb_max[1]-bb_min[1];
-    float delta_z = bb_max[2]-bb_min[2];
+        int res_x = m_generationCageDialog->spin_resolution_x->text().toInt();
 
-    float max = std::max(std::max(delta_x, delta_y), delta_z);  //On récupère la composante qui a l'écart maximum
+        Algo::Surface::Modelisation::swapVectorMax(bb_min, bb_max);
 
-    if(res_x<=0)
-        res_x = 1;
+        float delta_x = bb_max[0]-bb_min[0];
+        float delta_y = bb_max[1]-bb_min[1];
+        float delta_z = bb_max[2]-bb_min[2];
 
-    int n = res_x*max/delta_x;
+        float max = std::max(std::max(delta_x, delta_y), delta_z);  //On récupère la composante qui a l'écart maximum
 
-    //On adapte la résolution calculée pour qu'elle soit différente dans chacune des composantes x, y et z
-    resolutions[0] = n*delta_x/max;
-    resolutions[1] = n*delta_y/max;
-    resolutions[2] = n*delta_z/max;
+        if(res_x<=0)
+            res_x = 1;
+
+        int n = res_x*max/delta_x;
+
+        //On adapte la résolution calculée pour qu'elle soit différente dans chacune des composantes x, y et z
+        resolutions[0] = n*delta_x/max;
+        resolutions[1] = n*delta_y/max;
+        resolutions[2] = n*delta_z/max;
+    }
+    else {
+        int res_x = m_generationCageDialog->spin_resolution_x->text().toInt();
+        int res_y = m_generationCageDialog->spin_resolution_y->text().toInt();
+        int res_z = m_generationCageDialog->spin_resolution_z->text().toInt();
+        resolutions[0] = res_x>0?res_x:1;
+        resolutions[1] = res_y>0?res_y:1;
+        resolutions[2] = res_z>0?res_z:1;
+    }
 
     CGoGNout << "Modification des résolutions : Résolution en x = " << resolutions[0] << " | Résolution en y = "<< resolutions[1] << " | Résolution en z = " << resolutions[2] << CGoGNendl;
 
@@ -200,9 +217,9 @@ void Surface_GenerationCage_Plugin::voxellise() {
     }
 
     Geom::BoundingBox<PFP2::VEC3> bb = Algo::Geometry::computeBoundingBox<PFP2>(*selectedMap, position) ;
-    Geom::Vec3i resolutions = calculateResolutions(bb);
+    calculateResolutions(bb);
 
-    m_voxellisation = new Algo::Surface::Modelisation::Voxellisation(resolutions[0], resolutions[1], resolutions[2], bb);
+    m_voxellisation = new Algo::Surface::Modelisation::Voxellisation(m_resolutions->data()[0], m_resolutions->data()[1], m_resolutions->data()[2], bb);
 
     TraversorF<PFP2::MAP> trav_face_map(*selectedMap);
     std::vector<Geom::Vec3i> polygone = std::vector<Geom::Vec3i>();
