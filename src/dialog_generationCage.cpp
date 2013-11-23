@@ -11,7 +11,8 @@ namespace SCHNApps
 
 Dialog_GenerationCage::Dialog_GenerationCage(SCHNApps* s) :
     m_schnapps(s),
-    m_selectedMap(NULL)
+    m_selectedMap(NULL),
+    m_attributePositionChanged(true)
 {
     setupUi(this);
 
@@ -91,7 +92,8 @@ void Dialog_GenerationCage::addAttributeToList(unsigned int orbit, const QString
     const QString& typeAttr = m_selectedMap->getAttributeTypeName(orbit, nameAttr);
 
     if(typeAttr == vec3TypeName)
-    {   //On n'ajoute l'élment que s'il est de type Vec3 => C'est-à-dire s'il peut être interprêté comme un point
+    {   //On n'ajoute l'élment que s'il est de type Vec3
+        //C'est-à-dire s'il peut être interprêté comme un point
         combo_positionAttribute->addItem(nameAttr);
     }
 }

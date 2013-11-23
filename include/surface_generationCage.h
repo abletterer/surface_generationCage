@@ -5,6 +5,10 @@
 
 #include "dialog_generationCage.h"
 
+#include "Algo/Modelisation/voxellisation.h"
+
+#include "voxel.h"
+
 namespace CGoGN
 {
 
@@ -36,12 +40,18 @@ private slots:
     void dilaterVoxellisationFromDialog();
 
     void generationCage(const QString& mapName, const QString& positionAttributeName);
-    void dilaterVoxellisation(const QString& mapName);
+    void dilaterVoxellisation(const QString& mapName, const QString& positionAttributeName);
 
-    void calculateResolutions(const QString& mapName);
+    Geom::Vec3i& calculateResolutions(const Geom::BoundingBox<PFP2::VEC3>& bb);
+    Geom::Vec3i& updateResolutions(int res_x, const Geom::BoundingBox<PFP2::VEC3>& bb);
+
+    void voxellise();
+
+    Geom::Vec3i& getVoxelIndex(Geom::Vec3f a, const Geom::BoundingBox<PFP2::VEC3>& bb);
 private:
     Dialog_GenerationCage* m_generationCageDialog;
     QAction* m_generationCageAction;
+    Algo::Surface::Modelisation::Voxellisation* m_voxellisation;
 };
 
 } // namespace SCHNApps
