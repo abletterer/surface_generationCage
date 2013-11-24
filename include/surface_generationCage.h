@@ -6,6 +6,8 @@
 #include "dialog_generationCage.h"
 
 #include "Algo/Modelisation/voxellisation.h"
+#include "Algo/MC/marchingcube.h"
+#include "Algo/Import/import.h"
 
 #include "voxel.h"
 
@@ -42,17 +44,18 @@ private slots:
     void generationCage(const QString& mapName, const QString& positionAttributeName);
     void dilaterVoxellisation(const QString& mapName, const QString& positionAttributeName);
 
-    void calculateResolutions(const Geom::BoundingBox<PFP2::VEC3>& bb, bool first=true);
-    Geom::Vec3i& updateResolutions(const Geom::BoundingBox<PFP2::VEC3>& bb, bool independant=false);
+    void calculateResolutions();
+    Geom::Vec3i& updateResolutions(bool independant);
 
     void voxellise();
 
-    Geom::Vec3i& getVoxelIndex(Geom::Vec3f a, const Geom::BoundingBox<PFP2::VEC3>& bb);
+    Geom::Vec3i& getVoxelIndex(Geom::Vec3f a);
 private:
     Dialog_GenerationCage* m_generationCageDialog;
     QAction* m_generationCageAction;
     Algo::Surface::Modelisation::Voxellisation* m_voxellisation;
     Geom::Vec3i* m_resolutions;
+    Geom::BoundingBox<PFP2::VEC3>* m_bb;
 
     bool m_voxellisationNeeded;
 };

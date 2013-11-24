@@ -11,7 +11,7 @@
    </rect>
   </property>
   <property name="windowTitle">
-   <string>Compute Normal</string>
+   <string>Cage generation</string>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout_2">
    <item>
@@ -120,7 +120,7 @@
    <item>
     <widget class="QGroupBox" name="group_dilate">
      <property name="enabled">
-      <bool>false</bool>
+      <bool>true</bool>
      </property>
      <property name="title">
       <string>Dilation management</string>
@@ -196,7 +196,7 @@
    <item>
     <widget class="QGroupBox" name="group_generate">
      <property name="enabled">
-      <bool>false</bool>
+      <bool>true</bool>
      </property>
      <property name="title">
       <string>Surface generation</string>
@@ -228,7 +228,7 @@
         <item>
          <widget class="QPushButton" name="button_generate">
           <property name="enabled">
-           <bool>false</bool>
+           <bool>true</bool>
           </property>
           <property name="text">
            <string>Generate</string>
@@ -238,7 +238,7 @@
         <item>
          <widget class="QPushButton" name="button_close">
           <property name="enabled">
-           <bool>false</bool>
+           <bool>true</bool>
           </property>
           <property name="text">
            <string>Close</string>
@@ -255,8 +255,16 @@
  <tabstops>
   <tabstop>list_maps</tabstop>
   <tabstop>combo_positionAttribute</tabstop>
+  <tabstop>check_resolution</tabstop>
+  <tabstop>spin_resolution_x</tabstop>
+  <tabstop>spin_resolution_y</tabstop>
+  <tabstop>spin_resolution_z</tabstop>
   <tabstop>button_dilaterVoxellisation</tabstop>
   <tabstop>button_reinitialiserVoxellisation</tabstop>
+  <tabstop>radio_extractionFaces</tabstop>
+  <tabstop>radio_marchingCube</tabstop>
+  <tabstop>button_generate</tabstop>
+  <tabstop>button_close</tabstop>
   <tabstop>line_niveauDilatation</tabstop>
  </tabstops>
  <resources/>
