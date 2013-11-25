@@ -42,12 +42,14 @@ private slots:
     void dilaterVoxellisationFromDialog();
 
     void generationCage(const QString& mapName, const QString& positionAttributeName);
-    void dilaterVoxellisation(const QString& mapName, const QString& positionAttributeName);
+    void dilaterVoxellisation(const QString& mapName, const QString &positionAttributeName);
 
     void calculateResolutions();
     Geom::Vec3i& updateResolutions(bool independant);
 
-    void voxellise();
+    void extractionCarte(const QString& mapName);
+
+    void voxellise(const QString& mapName, const QString &positionAttributeName);
 
     Geom::Vec3i& getVoxelIndex(Geom::Vec3f a);
 private:

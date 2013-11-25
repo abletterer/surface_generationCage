@@ -30,8 +30,6 @@ bool Surface_GenerationCage_Plugin::enable()
     connect(m_schnapps, SIGNAL(mapAdded(MapHandlerGen*)), this, SLOT(mapAdded(MapHandlerGen*)));
     connect(m_schnapps, SIGNAL(mapRemoved(MapHandlerGen*)), this, SLOT(mapRemoved(MapHandlerGen*)));
 
-    connect(m_generationCageDialog->button_dilaterVoxellisation, SIGNAL(clicked()), this, SLOT(dilaterVoxellisationFromDialog()));
-
     foreach(MapHandlerGen* map, m_schnapps->getMapSet().values())
         mapAdded(map);
 
@@ -105,11 +103,29 @@ void Surface_GenerationCage_Plugin::generationCage(const QString& mapName, const
     if(m_generationCageDialog->isVoxellisationNeeded()) {
         //Si des changements nécessitant une nouvelle voxellisation sont nécessaires
         m_generationCageDialog->setVoxellisationNeeded(false);
-        voxellise();
+        voxellise(mapName, positionAttributeName);
         m_voxellisation.marqueVoxelsExterieurs();
         m_voxellisation.remplit();
         m_voxellisation.check();
     }
+    extractionCarte(mapName);
+    m_generationCageDialog->updateResolutionsSpinsValues(m_resolutions);
+}
+
+void Surface_GenerationCage_Plugin::dilaterVoxellisation(const QString& mapName, const QString& positionAttributeName) {
+    if(m_generationCageDialog->isVoxellisationNeeded()) {
+        //Si depuis les derniers traitements l'attribut de position a été modifié
+        m_generationCageDialog->setVoxellisationNeeded(false);
+        voxellise(mapName, positionAttributeName);
+        m_voxellisation.marqueVoxelsExterieurs();
+        m_voxellisation.remplit();
+    }
+    m_voxellisation.dilate();
+    extractionCarte(mapName);
+    m_generationCageDialog->line_niveauDilatation->setText(QString::number(m_generationCageDialog->line_niveauDilatation->text().toInt()+1));
+}
+
+void Surface_GenerationCage_Plugin::extractionCarte(const QString& mapName) {
     MapHandler<PFP2>* mh = static_cast<MapHandler<PFP2>*>(m_schnapps->getMap(mapName+QString("Cage")));
 
     if(mh==NULL) {
@@ -118,11 +134,12 @@ void Surface_GenerationCage_Plugin::generationCage(const QString& mapName, const
     }
 
     PFP2::MAP* mapCage = mh->getMap();
-    mapCage->clear(false);
+    mapCage->clear(true);
 
     VertexAttribute<PFP2::VEC3> positionCage = mapCage->getAttribute<PFP2::VEC3, VERTEX>("position");
     if(!positionCage.isValid()) {
         positionCage = mapCage->addAttribute<PFP2::VEC3, VERTEX>("position");
+        mh->registerAttribute(positionCage);
     }
 
     if(m_generationCageDialog->radio_extractionFaces->isChecked()) {
@@ -149,23 +166,9 @@ void Surface_GenerationCage_Plugin::generationCage(const QString& mapName, const
         delete image;
     }
 
-    mh->registerAttribute(positionCage);
-
     mh->notifyAttributeModification(positionCage);  //Met a jour le VBO
 
     mh->updateBB(positionCage); //Met a jour la boite englobante de la carte
-}
-
-void Surface_GenerationCage_Plugin::dilaterVoxellisation(const QString& mapName, const QString& positionAttributeName) {
-    if(m_generationCageDialog->isVoxellisationNeeded()) {
-        //Si depuis les derniers traitements l'attribut de position a été modifié
-        m_generationCageDialog->setVoxellisationNeeded(false);
-        voxellise();
-        m_voxellisation.marqueVoxelsExterieurs();
-        m_voxellisation.remplit();
-    }
-    m_voxellisation.extractionBord();
-    m_generationCageDialog->line_niveauDilatation->setText(QString::number(m_generationCageDialog->line_niveauDilatation->text().toInt()+1));
 }
 
 void Surface_GenerationCage_Plugin::calculateResolutions() {
@@ -251,47 +254,43 @@ Geom::Vec3i& Surface_GenerationCage_Plugin::updateResolutions(bool independant) 
     return *resolutions;
 }
 
-void Surface_GenerationCage_Plugin::voxellise() {
-    QList<QListWidgetItem*> currentItems = m_generationCageDialog->list_maps->selectedItems();
-    if(!currentItems.empty()) {
-        MapHandler<PFP2>* mh = static_cast<MapHandler<PFP2>*>(m_schnapps->getMap(currentItems[0]->text()));
-        PFP2::MAP* selectedMap = mh->getMap();
+void Surface_GenerationCage_Plugin::voxellise(const QString& mapName, const QString& positionAttributeName) {
+    MapHandler<PFP2>* mh = static_cast<MapHandler<PFP2>*>(m_schnapps->getMap(mapName));
+    PFP2::MAP* selectedMap = mh->getMap();
 
-        QString positionAttributeName = m_generationCageDialog->combo_positionAttribute->currentText();
-        VertexAttribute<PFP2::VEC3> position = selectedMap->getAttribute<PFP2::VEC3, VERTEX>(positionAttributeName.toStdString());
-        if(!position.isValid()) {
-            CGoGNout << "L'aattribut de position choisi pour la carte sélectionnée n'est pas valide." << CGoGNendl;
-            return;
-        }
-
-        VertexAttribute<Voxel> voxel = selectedMap->getAttribute<Voxel, VERTEX>("voxel");
-        if(!voxel.isValid()) {
-            voxel = selectedMap->addAttribute<Voxel, VERTEX>("voxel");
-        }
-
-        m_bb = Algo::Geometry::computeBoundingBox<PFP2>(*selectedMap, position);
-
-        calculateResolutions();
-
-        m_voxellisation = Algo::Surface::Modelisation::Voxellisation(m_resolutions[0], m_resolutions[1], m_resolutions[2], m_bb);
-
-        TraversorF<PFP2::MAP> trav_face_map(*selectedMap);
-        std::vector<Geom::Vec3i> polygone = std::vector<Geom::Vec3i>();
-
-        for(Dart d = trav_face_map.begin(); d!=trav_face_map.end(); d=trav_face_map.next()) {
-            //On traverse l'ensemble des faces de la carte
-            Traversor2FV<PFP2::MAP> trav_face_vert(*selectedMap,d);
-            polygone.clear();
-            for(Dart e = trav_face_vert.begin(); e!=trav_face_vert.end(); e=trav_face_vert.next()) {
-                //On récupère les sommets composants la face courante
-                voxel[e].setIndexes(getVoxelIndex(position[e]));
-                polygone.push_back(voxel[e].getIndexes());
-            }
-            m_voxellisation.voxellisePolygone(polygone);
-        }
-
-        CGoGNout << "Fin de la voxellisation. Il y a " << m_voxellisation.size() << " voxel(s) qui entourent le maillage" << CGoGNendl;
+    VertexAttribute<PFP2::VEC3> position = selectedMap->getAttribute<PFP2::VEC3, VERTEX>(positionAttributeName.toStdString());
+    if(!position.isValid()) {
+        CGoGNout << "L'aattribut de position choisi pour la carte sélectionnée n'est pas valide." << CGoGNendl;
+        return;
     }
+
+    VertexAttribute<Voxel> voxel = selectedMap->getAttribute<Voxel, VERTEX>("voxel");
+    if(!voxel.isValid()) {
+        voxel = selectedMap->addAttribute<Voxel, VERTEX>("voxel");
+    }
+
+    m_bb = Algo::Geometry::computeBoundingBox<PFP2>(*selectedMap, position);
+
+    calculateResolutions();
+
+    m_voxellisation = Algo::Surface::Modelisation::Voxellisation(m_resolutions[0], m_resolutions[1], m_resolutions[2], m_bb);
+
+    TraversorF<PFP2::MAP> trav_face_map(*selectedMap);
+    std::vector<Geom::Vec3i> polygone = std::vector<Geom::Vec3i>();
+
+    for(Dart d = trav_face_map.begin(); d!=trav_face_map.end(); d=trav_face_map.next()) {
+        //On traverse l'ensemble des faces de la carte
+        Traversor2FV<PFP2::MAP> trav_face_vert(*selectedMap,d);
+        polygone.clear();
+        for(Dart e = trav_face_vert.begin(); e!=trav_face_vert.end(); e=trav_face_vert.next()) {
+            //On récupère les sommets composants la face courante
+            voxel[e].setIndexes(getVoxelIndex(position[e]));
+            polygone.push_back(voxel[e].getIndexes());
+        }
+        m_voxellisation.voxellisePolygone(polygone);
+    }
+
+    CGoGNout << "Fin de la voxellisation. Il y a " << m_voxellisation.size() << " voxel(s) qui entourent le maillage" << CGoGNendl;
 }
 
 /*
