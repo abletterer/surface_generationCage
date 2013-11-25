@@ -120,7 +120,6 @@ void Surface_GenerationCage_Plugin::generationCage(const QString& mapName, const
     PFP2::MAP* mapCage = mh->getMap();
     mapCage->clear(false);
 
-
     VertexAttribute<PFP2::VEC3> positionCage = mapCage->getAttribute<PFP2::VEC3, VERTEX>("position");
     if(!positionCage.isValid()) {
         positionCage = mapCage->addAttribute<PFP2::VEC3, VERTEX>("position");
@@ -130,8 +129,8 @@ void Surface_GenerationCage_Plugin::generationCage(const QString& mapName, const
         //Si l'algorithme choisi est celui de l'extraction de faces
         m_voxellisation.extractionBord();
         std::vector<std::string> attrNamesCage;
-        //MERGE CLOSE VERTICES A TRUE FAIT PLANTER L'APPLICATION
-        if(!Algo::Surface::Import::importVoxellisation<PFP2>(*mapCage, m_voxellisation, attrNamesCage, true))
+        //MERGE CLOSE VERTICES A 'TRUE' FAIT PLANTER L'APPLICATION
+        if(!Algo::Surface::Import::importVoxellisation<PFP2>(*mapCage, m_voxellisation, attrNamesCage, false))
         {
             CGoGNerr << "Impossible d'importer la voxellisation" << CGoGNendl ;
             return;
