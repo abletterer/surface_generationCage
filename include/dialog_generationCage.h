@@ -24,10 +24,14 @@ public:
     bool isVoxellisationNeeded() { return m_voxellisationNeeded; }
     void setVoxellisationNeeded(bool needed) { m_voxellisationNeeded = needed; }
 
-    void updateResolutionsSpinsValues(const Geom::Vec3i resolutions) {
+    void updateResolutionsFromPlugin(const Geom::Vec3i resolutions) {
         spin_resolution_x->setValue(resolutions[0]);
         spin_resolution_y->setValue(resolutions[1]);
         spin_resolution_z->setValue(resolutions[2]);
+    }
+
+    void updateNiveauDilatationFromPlugin(int dilatation) {
+        line_niveauDilatation->setText(QString::number(dilatation));
     }
 
 private:

@@ -17,6 +17,23 @@ namespace CGoGN
 namespace SCHNApps
 {
 
+struct MapParameters
+{
+    MapParameters();
+    ~MapParameters() {}
+
+    void start(const QString& mapName, const QString& positionAttributeName);
+    void stop(const QString& mapName, const QString& positionAttributeName);
+
+    bool m_initialized;
+
+    Algo::Surface::Modelisation::Voxellisation m_voxellisation;
+    Geom::Vec3i m_resolutions;
+    Geom::BoundingBox<PFP2::VEC3> m_bb;
+    int m_dilatation;
+    bool m_toVoxellise;
+};
+
 class Surface_GenerationCage_Plugin : public PluginProcessing
 {
 	Q_OBJECT
@@ -42,37 +59,21 @@ private slots:
     void dilaterVoxellisationFromDialog();
 
     void generationCage(const QString& mapName, const QString& positionAttributeName);
-    void dilaterVoxellisation(const QString& mapName, const QString &positionAttributeName);
+    void dilaterVoxellisation(const QString& mapName, const QString& positionAttributeName);
 
-    void calculateResolutions();
-    Geom::Vec3i& updateResolutions(bool independant);
+    void calculateResolutions(const QString& mapName, const QString& positionAttributeName);
+    void updateResolutions(const QString& mapName, const QString& positionAttributeName, bool independant);
 
-    void extractionCarte(const QString& mapName);
+    void extractionCarte(const QString& mapName, const QString& positionAttributeName);
 
     void voxellise(const QString& mapName, const QString &positionAttributeName);
 
-    Geom::Vec3i& getVoxelIndex(Geom::Vec3f a);
+    Geom::Vec3i& getVoxelIndex(const QString& mapName, const QString& positionAttributeName, Geom::Vec3f a);
 private:
     Dialog_GenerationCage* m_generationCageDialog;
     QAction* m_generationCageAction;
 
-    /*struct GenerationCageParameters
-    {
-        GenerationCageParameters() {}
-        GenerationCageParameters(
-            Algo::Surface::Modelisation::Voxellisation& voxellisation,
-            Geom::Vec3i resolutions, Geom::BoundingBox<PFP2::VEC3> bb) :
-            m_voxellisation(voxellisation), m_resolutions(resolutions), m_bb(bb)
-        {}
-        Algo::Surface::Modelisation::Voxellisation m_voxellisation;
-        Geom::Vec3i m_resolutions;
-        Geom::BoundingBox<PFP2::VEC3> m_bb;
-    };
-    QHash<QString, GenerationCageParameters> generationCageParameters;*/
-
-    Algo::Surface::Modelisation::Voxellisation m_voxellisation;
-    Geom::Vec3i m_resolutions;
-    Geom::BoundingBox<PFP2::VEC3> m_bb;
+    QHash<QString, MapParameters> h_parameterSet;
 
     bool m_voxellisationNeeded;
 
