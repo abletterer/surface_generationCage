@@ -97,6 +97,7 @@ void Dialog_GenerationCage::selectedMapChanged()
     }
     else
         m_selectedMap = NULL;
+    m_voxellisationNeeded = true;
 }
 
 void Dialog_GenerationCage::selectedPositionAttributeChanged(QString nameAttr) {

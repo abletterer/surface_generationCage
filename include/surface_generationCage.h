@@ -53,11 +53,28 @@ private slots:
 private:
     Dialog_GenerationCage* m_generationCageDialog;
     QAction* m_generationCageAction;
-    Algo::Surface::Modelisation::Voxellisation* m_voxellisation;
-    Geom::Vec3i* m_resolutions;
-    Geom::BoundingBox<PFP2::VEC3>* m_bb;
+
+    /*struct GenerationCageParameters
+    {
+        GenerationCageParameters() {}
+        GenerationCageParameters(
+            Algo::Surface::Modelisation::Voxellisation& voxellisation,
+            Geom::Vec3i resolutions, Geom::BoundingBox<PFP2::VEC3> bb) :
+            m_voxellisation(voxellisation), m_resolutions(resolutions), m_bb(bb)
+        {}
+        Algo::Surface::Modelisation::Voxellisation m_voxellisation;
+        Geom::Vec3i m_resolutions;
+        Geom::BoundingBox<PFP2::VEC3> m_bb;
+    };
+    QHash<QString, GenerationCageParameters> generationCageParameters;*/
+
+    Algo::Surface::Modelisation::Voxellisation m_voxellisation;
+    Geom::Vec3i m_resolutions;
+    Geom::BoundingBox<PFP2::VEC3> m_bb;
 
     bool m_voxellisationNeeded;
+
+
 };
 
 } // namespace SCHNApps

@@ -14,11 +14,11 @@ bool Surface_GenerationCage_Plugin::enable()
 
     m_generationCageAction = new QAction("Generate cage", this);
 
-    m_voxellisation = new Algo::Surface::Modelisation::Voxellisation();
+    m_voxellisation = Algo::Surface::Modelisation::Voxellisation();
 
-    m_resolutions = new Geom::Vec3i();
+    m_resolutions = Geom::Vec3i();
 
-    m_bb = new Geom::BoundingBox<PFP2::VEC3>();
+    m_bb = Geom::BoundingBox<PFP2::VEC3>();
 
     m_schnapps->addMenuAction(this, "Surface;Generate cage", m_generationCageAction);
 
@@ -47,10 +47,6 @@ void Surface_GenerationCage_Plugin::disable()
 
     disconnect(m_schnapps, SIGNAL(mapAdded(MapHandlerGen*)), this, SLOT(mapAdded(MapHandlerGen*)));
     disconnect(m_schnapps, SIGNAL(mapRemoved(MapHandlerGen*)), this, SLOT(mapRemoved(MapHandlerGen*)));
-
-    delete m_voxellisation;
-    delete m_resolutions;
-    delete m_bb;
 }
 
 void Surface_GenerationCage_Plugin::mapAdded(MapHandlerGen *map)
@@ -110,8 +106,9 @@ void Surface_GenerationCage_Plugin::generationCage(const QString& mapName, const
         //Si des changements nécessitant une nouvelle voxellisation sont nécessaires
         m_generationCageDialog->setVoxellisationNeeded(false);
         voxellise();
-        m_voxellisation->marqueVoxelsExterieurs();
-        m_voxellisation->remplit();
+        m_voxellisation.marqueVoxelsExterieurs();
+        m_voxellisation.remplit();
+        m_voxellisation.check();
     }
     MapHandler<PFP2>* mh = static_cast<MapHandler<PFP2>*>(m_schnapps->getMap(mapName+QString("Cage")));
 
@@ -131,10 +128,10 @@ void Surface_GenerationCage_Plugin::generationCage(const QString& mapName, const
 
     if(m_generationCageDialog->radio_extractionFaces->isChecked()) {
         //Si l'algorithme choisi est celui de l'extraction de faces
-        m_voxellisation->extractionBord();
+        m_voxellisation.extractionBord();
         std::vector<std::string> attrNamesCage;
         //MERGE CLOSE VERTICES A TRUE FAIT PLANTER L'APPLICATION
-        if(!Algo::Surface::Import::importVoxellisation<PFP2>(*mapCage, *m_voxellisation, attrNamesCage, false))
+        if(!Algo::Surface::Import::importVoxellisation<PFP2>(*mapCage, m_voxellisation, attrNamesCage, true))
         {
             CGoGNerr << "Impossible d'importer la voxellisation" << CGoGNendl ;
             return;
@@ -144,14 +141,16 @@ void Surface_GenerationCage_Plugin::generationCage(const QString& mapName, const
     else if(m_generationCageDialog->radio_marchingCube->isChecked()){
         //Si l'algorithme choisi est celui du marching cube
 
-        Algo::Surface::MC::Image<int>* image = m_voxellisation->getImage();   //On récupère l'image correspondant à la voxellisation
+        Algo::Surface::MC::Image<int>* image = m_voxellisation.getImage();   //On récupère l'image correspondant à la voxellisation
         Algo::Surface::MC::WindowingEqual<int> windowing;
         windowing.setIsoValue(2); //L'intérieur est représenté avec une valeur de '2'
         Algo::Surface::MC::MarchingCube<int, Algo::Surface::MC::WindowingEqual,PFP2> marching_cube(image, mapCage, positionCage, windowing, false);
         marching_cube.simpleMeshing();
-        marching_cube.recalPoints(m_bb->min()-Geom::Vec3f(image->getVoxSizeX(), image->getVoxSizeY(), image->getVoxSizeZ()));
+        //marching_cube.recalPoints(m_bb.min()-Geom::Vec3f(image->getVoxSizeX(), image->getVoxSizeY(), image->getVoxSizeZ()));
         delete image;
     }
+
+    mh->registerAttribute(positionCage);
 
     mh->notifyAttributeModification(positionCage);  //Met a jour le VBO
 
@@ -163,10 +162,10 @@ void Surface_GenerationCage_Plugin::dilaterVoxellisation(const QString& mapName,
         //Si depuis les derniers traitements l'attribut de position a été modifié
         m_generationCageDialog->setVoxellisationNeeded(false);
         voxellise();
-        m_voxellisation->marqueVoxelsExterieurs();
-        m_voxellisation->remplit();
+        m_voxellisation.marqueVoxelsExterieurs();
+        m_voxellisation.remplit();
     }
-    m_voxellisation->extractionBord();
+    m_voxellisation.extractionBord();
     m_generationCageDialog->line_niveauDilatation->setText(QString::number(m_generationCageDialog->line_niveauDilatation->text().toInt()+1));
 }
 
@@ -176,8 +175,8 @@ void Surface_GenerationCage_Plugin::calculateResolutions() {
         MapHandler<PFP2>* mh = static_cast<MapHandler<PFP2>*>(m_schnapps->getMap(currentItems[0]->text()));
         PFP2::MAP* selectedMap = mh->getMap();
 
-        Geom::Vec3f bb_min = m_bb->min();
-        Geom::Vec3f bb_max = m_bb->max();
+        Geom::Vec3f bb_min = m_bb.min();
+        Geom::Vec3f bb_max = m_bb.max();
 
         const float SPARSE_FACTOR=0.05f;
 
@@ -195,13 +194,13 @@ void Surface_GenerationCage_Plugin::calculateResolutions() {
         //On adapte la résolution calculée pour qu'elle soit différente dans chacune des composantes x, y et z
         do {
             //On recalcule les résolutions jusqu'à ce que chacune d'entre elle ne soit plus nulle
-            m_resolutions->data()[0] = n*delta_x/max;
-            m_resolutions->data()[1] = n*delta_y/max;
-            m_resolutions->data()[2] = n*delta_z/max;
+            m_resolutions[0] = n*delta_x/max;
+            m_resolutions[1] = n*delta_y/max;
+            m_resolutions[2] = n*delta_z/max;
             n+=5;
-        } while(m_resolutions->data()[0]==0 || m_resolutions->data()[1]==0 || m_resolutions->data()[2]==0);
+        } while(m_resolutions[0]==0 || m_resolutions[1]==0 || m_resolutions[2]==0);
 
-        CGoGNout << "Initialisation des résolutions : Résolution en x = " << m_resolutions->data()[0] << " | Résolution en y = "<< m_resolutions->data()[1] << " | Résolution en z = " << m_resolutions->data()[2] << CGoGNendl;
+        CGoGNout << "Initialisation des résolutions : Résolution en x = " << m_resolutions[0] << " | Résolution en y = "<< m_resolutions[1] << " | Résolution en z = " << m_resolutions[2] << CGoGNendl;
         m_generationCageDialog->updateResolutionsSpinsValues(m_resolutions);
     }
 }
@@ -214,8 +213,8 @@ Geom::Vec3i& Surface_GenerationCage_Plugin::updateResolutions(bool independant) 
 
     if(!independant) {
         //Si les coordonnées sont calculées de façon indépendante
-        Geom::Vec3f bb_min = m_bb->min();
-        Geom::Vec3f bb_max = m_bb->max();
+        Geom::Vec3f bb_min = m_bb.min();
+        Geom::Vec3f bb_max = m_bb.max();
 
         int res_x = m_generationCageDialog->spin_resolution_x->text().toInt();
 
@@ -262,7 +261,7 @@ void Surface_GenerationCage_Plugin::voxellise() {
         QString positionAttributeName = m_generationCageDialog->combo_positionAttribute->currentText();
         VertexAttribute<PFP2::VEC3> position = selectedMap->getAttribute<PFP2::VEC3, VERTEX>(positionAttributeName.toStdString());
         if(!position.isValid()) {
-            CGoGNout << "La position n'est pas valide pour la carte sélectionnée." << CGoGNendl;
+            CGoGNout << "L'aattribut de position choisi pour la carte sélectionnée n'est pas valide." << CGoGNendl;
             return;
         }
 
@@ -271,13 +270,11 @@ void Surface_GenerationCage_Plugin::voxellise() {
             voxel = selectedMap->addAttribute<Voxel, VERTEX>("voxel");
         }
 
-        delete m_bb;
-        m_bb = new Geom::BoundingBox<PFP2::VEC3>(Algo::Geometry::computeBoundingBox<PFP2>(*selectedMap, position)) ;
+        m_bb = Algo::Geometry::computeBoundingBox<PFP2>(*selectedMap, position);
 
         calculateResolutions();
 
-        delete m_voxellisation;
-        m_voxellisation = new Algo::Surface::Modelisation::Voxellisation(m_resolutions->data()[0], m_resolutions->data()[1], m_resolutions->data()[2], *m_bb);
+        m_voxellisation = Algo::Surface::Modelisation::Voxellisation(m_resolutions[0], m_resolutions[1], m_resolutions[2], m_bb);
 
         TraversorF<PFP2::MAP> trav_face_map(*selectedMap);
         std::vector<Geom::Vec3i> polygone = std::vector<Geom::Vec3i>();
@@ -291,10 +288,10 @@ void Surface_GenerationCage_Plugin::voxellise() {
                 voxel[e].setIndexes(getVoxelIndex(position[e]));
                 polygone.push_back(voxel[e].getIndexes());
             }
-            m_voxellisation->voxellisePolygone(polygone);
+            m_voxellisation.voxellisePolygone(polygone);
         }
 
-        CGoGNout << "Fin de la voxellisation. Il y a " << m_voxellisation->size() << " voxel(s) qui entourent le maillage" << CGoGNendl;
+        CGoGNout << "Fin de la voxellisation. Il y a " << m_voxellisation.size() << " voxel(s) qui entourent le maillage" << CGoGNendl;
     }
 }
 
@@ -304,19 +301,19 @@ void Surface_GenerationCage_Plugin::voxellise() {
 Geom::Vec3i& Surface_GenerationCage_Plugin::getVoxelIndex(Geom::Vec3f a) {
     Geom::Vec3i* voxel = new Geom::Vec3i();
 
-    Geom::Vec3f bb_min = m_bb->min();
-    Geom::Vec3f bb_max = m_bb->max();
+    Geom::Vec3f bb_min = m_bb.min();
+    Geom::Vec3f bb_max = m_bb.max();
 
     Algo::Surface::Modelisation::swapVectorMax(bb_min, bb_max);
 
     for(int i=0; i<3; ++i) {
         if(bb_max[i]-bb_min[i]>0)
-            voxel->data()[i] = m_voxellisation->getResolution(i)/(bb_max[i]-bb_min[i])*(a[i]-bb_min[i]);
+            voxel->data()[i] = m_voxellisation.getResolution(i)/(bb_max[i]-bb_min[i])*(a[i]-bb_min[i]);
         else
             voxel->data()[i] = 0;
 
 
-        if(voxel->data()[i] == m_voxellisation->getResolution(i))
+        if(voxel->data()[i] == m_voxellisation.getResolution(i))
             --voxel->data()[i];
     }
 
