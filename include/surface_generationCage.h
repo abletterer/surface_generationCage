@@ -20,19 +20,20 @@ namespace SCHNApps
 struct MapParameters
 {
     MapParameters();
-    ~MapParameters() {}
+    ~MapParameters();
 
     void start(const QString& mapName, const QString& positionAttributeName);
     void stop(const QString& mapName, const QString& positionAttributeName);
 
     bool m_initialized;
 
-    Algo::Surface::Modelisation::Voxellisation m_voxellisation;
-    Geom::Vec3i m_resolutions;
-    Geom::BoundingBox<PFP2::VEC3> m_bb;
+    Algo::Surface::Modelisation::Voxellisation* m_voxellisation;
+    Geom::Vec3i* m_resolutions;
+    Geom::BoundingBox<PFP2::VEC3>* m_bb;
     int m_dilatation;
     bool m_toVoxellise;
     bool m_independant;
+    bool m_extractionFaces;
 };
 
 class Surface_GenerationCage_Plugin : public PluginProcessing
@@ -56,11 +57,18 @@ private slots:
     void attributeModified(unsigned int orbit, QString nameAttr);
 
     void openGenerationCageDialog();
+
     void generationCageFromDialog();
     void dilaterVoxellisationFromDialog();
+
     void currentMapSelectedChangedFromDialog();
     void currentAttributeIndexChangedFromDialog(QString nameAttr);
+
     void resolutionToggledFromDialog(bool b);
+
+    void resolutionModifiedFromDialog();
+
+    void surfaceExtractionToggledFromDialog(bool b);
 
     void generationCage(const QString& mapName, const QString& positionAttributeName);
     void dilaterVoxellisation(const QString& mapName, const QString& positionAttributeName);
@@ -76,8 +84,6 @@ private slots:
 private:
     Dialog_GenerationCage* m_generationCageDialog;
     QAction* m_generationCageAction;
-
-    bool m_voxellisationNeeded;
 
 public:
     QHash<QString, MapParameters> h_parameterSet;

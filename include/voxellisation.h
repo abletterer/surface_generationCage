@@ -47,8 +47,8 @@ void swapVectorMax(Geom::Vector<DIM, T>& min, Geom::Vector<DIM, T>& max) {
 
 class Voxellisation {
    public:
-    Voxellisation(unsigned int taille_x=0, unsigned int taille_y=0, unsigned int taille_z=0, Geom::BoundingBox<Geom::Vec3f> bb=Geom::BoundingBox<PFP::VEC3>())
-            :   m_taille_x(taille_x+2), m_taille_y(taille_y+2), m_taille_z(taille_z+2), m_transfo(3),
+        Voxellisation(Geom::Vec3i resolutions= Geom::Vec3i(), Geom::BoundingBox<Geom::Vec3f> bb=Geom::BoundingBox<PFP::VEC3>())
+            :   m_taille_x(resolutions[0]+2), m_taille_y(resolutions[1]+2), m_taille_z(resolutions[2]+2), m_transfo(3),
               m_bb_min(Geom::Vec3f()), m_bb_max(Geom::Vec3f()), m_data(m_taille_x*m_taille_y*m_taille_z, 0),
             m_indexes(), m_sommets(), m_faces()
         {
@@ -58,6 +58,13 @@ class Voxellisation {
             m_transfo[0] = (m_bb_max[0]-m_bb_min[0])/(m_taille_x-2);
             m_transfo[1] = (m_bb_max[1]-m_bb_min[1])/(m_taille_y-2);
             m_transfo[2] = (m_bb_max[2]-m_bb_min[2])/(m_taille_z-2);
+        }
+
+        ~Voxellisation() {
+            m_data.clear();
+            m_indexes.clear();
+            m_sommets.clear();
+            m_faces.clear();
         }
 
         void removeVoxel(int x, int y, int z) {
@@ -180,23 +187,11 @@ class Voxellisation {
             return m_size;
         }
 
-        void check(int type=1) {
-            int voxels = 0;
-            for(int i=0; i<m_taille_x; ++i) {
-                for(int j=0; j<m_taille_y; ++j) {
-                    for(int k=0; k<m_taille_z; ++k) {
-                        voxels += m_data[i+ j*m_taille_x + k*m_taille_x*m_taille_y]==type?1:0;
-                    }
-                }
-            }
-            CGoGNout << "Il y a " << voxels << " voxel(s)" << CGoGNendl;
-        }
-
         /*
-          * Fonction qui réalise le remplissage d'un polygone convexe
+          * Fonction qui ralise le remplissage d'un polygone convexe
           */
         void voxellisePolygone(std::vector<Geom::Vec3i>& polygone) {
-            //On trie les arêtes selon leur Y décroissant
+            //On trie les artes selon leur Y dcroissant
             Geom::Vec3i a, b, c = polygone.back();
             int x, y, z, dx, dy, dz, swap, ddy, ddz, sx, sy, sz;
             for(unsigned int i=0; i<polygone.size()-1;++i) {
@@ -251,8 +246,8 @@ class Voxellisation {
         }
 
         /*
-          * Fonction qui réalise un tracé de droite discrète en 3D du voxel 'a' au voxel 'b'
-          * L'algorithme utilisé est celui de Bresenham, adapté à la 3D
+          * Fonction qui ralise un trac de droite discrte en 3D du voxel 'a' au voxel 'b'
+          * L'algorithme utilis est celui de Bresenham, adapt  la 3D
           */
         void voxelliseLine(Geom::Vec3i a, Geom::Vec3i b) {
             int x, y, z, dx, dy, dz, swap, ddy, ddz, sx, sy, sz;
@@ -286,13 +281,13 @@ class Voxellisation {
                         if(swap==1) x+=sx;
                         else y+=sy;
                     }
-                    addVoxel(x, y, z); //On affiche les points intermédiaires -> ligne 6-connexe
+                    addVoxel(x, y, z); //On affiche les points intermdiaires -> ligne 6-connexe
                     while(ddz>=0) {
                         ddz -= dx<<1;
                         if(swap==2) x+=sx;
                         else z+=sz;
                     }
-                    addVoxel(x, y, z); //On affiche les points intermédiaires -> ligne 6-connexe
+                    addVoxel(x, y, z); //On affiche les points intermdiaires -> ligne 6-connexe
                     ddy += dy<<1;
                     ddz += dz<<1;
                     if(swap==1) y+=sy;
@@ -304,18 +299,18 @@ class Voxellisation {
         }
 
         /*
-          * Fonction qui part d'un des sommets de la Bounding box et qui va marquer les pixels non déjà marqués comme faisant partie de l'extérieur
-          * Utilisation de algorithme de croissance de région
+          * Fonction qui part d'un des sommets de la Bounding box et qui va marquer les pixels non dj marqus comme faisant partie de l'extrieur
+          * Utilisation de algorithme de croissance de rgion
           */
         void marqueVoxelsExterieurs() {
-            CGoGNout << "Marquage des voxels extérieurs.." << CGoGNflush;
+            CGoGNout << "Marquage des voxels extrieurs.." << CGoGNflush;
             std::stack<Geom::Vec3i> pile;
             Geom::Vec3i voxel_courant;
 
             pile.push(Geom::Vec3i(0,0,0));
 
             while(!pile.empty()) {
-                //Tant qu'il y a des voxels à traiter
+                //Tant qu'il y a des voxels  traiter
                 voxel_courant = pile.top();
                 pile.pop();
                 addVoxelRaw(voxel_courant,2);
@@ -336,10 +331,11 @@ class Voxellisation {
         }
 
         /*
-          * Fonction qui extrait les faces extérieu res des voxels en regardant quelles faces appartiennent à un voxel extérieur et un voxel d'intersection
+          * Fonction qui extrait les faces extrieu res des voxels en regardant quelles faces appartiennent  un voxel extrieur et un voxel d'intersection
           */
         void extractionBord() {
             CGoGNout << "Extraction du bord.." << CGoGNflush;
+
             m_indexes.clear();
             m_faces.clear();
             m_faces.reserve(m_size*6);  //Au maximum on a 6 fois plus de faces que le nombre de voxels (cas d'1 seul voxel qui intersecte la surface du maillage
@@ -353,7 +349,7 @@ class Voxellisation {
                         if(getVoxel(i,j,k)==1) {
                             //Si le voxel courant intersecte le bord du maillage de base
                             if(getVoxel(i-1,j,k)==2) {
-                                //Si le voxel de gauche est un voxel de l'extérieur
+                                //Si le voxel de gauche est un voxel de l'extrieur
                                 //Sommets formant la face : 8, 5, 4, 1
                                 x = i-1; y = j; z = k;
                                 ajouteSommet(++x,y,z);
@@ -362,7 +358,7 @@ class Voxellisation {
                                 ajouteSommet(x,y,--z);
                             }
                             if(getVoxel(i+1,j,k)==2) {
-                                //Si le voxel de droite est un voxel de l'extérieur
+                                //Si le voxel de droite est un voxel de l'extrieur
                                 //Sommets formant la face : 7, 2, 3, 6
                                 x = i+1; y = j; z = k;
                                 ajouteSommet(x,y,z);
@@ -371,7 +367,7 @@ class Voxellisation {
                                 ajouteSommet(x,--y,z);
                             }
                             if(getVoxel(i,j-1,k)==2) {
-                                //Si le voxel en dessous est un voxel de l'extérieur
+                                //Si le voxel en dessous est un voxel de l'extrieur
                                 //Sommets formant la face : 8, 7, 6, 5
                                 x = i; y = j-1; z = k;
                                 ajouteSommet(x,++y,z);
@@ -380,7 +376,7 @@ class Voxellisation {
                                 ajouteSommet(--x,y,z);
                             }
                             if(getVoxel(i,j+1,k)==2) {
-                                //Si le voxel au dessus est un voxel de l'extérieur
+                                //Si le voxel au dessus est un voxel de l'extrieur
                                 //Sommets formant la face : 1, 4, 3, 2
                                 x = i; y = j+1; z = k;
                                 ajouteSommet(x,y,z);
@@ -389,7 +385,7 @@ class Voxellisation {
                                 ajouteSommet(x,y,--z);
                             }
                             if(getVoxel(i,j,k-1)==2) {
-                                //Si le voxel derrière est un voxel de l'extérieur
+                                //Si le voxel derrire est un voxel de l'extrieur
                                 //Sommets formant la face : 8, 1, 2 ,7
                                 x = i; y = j; z = k-1;
                                 ajouteSommet(x,y,++z);
@@ -398,7 +394,7 @@ class Voxellisation {
                                 ajouteSommet(x,--y,z);
                             }
                             if(getVoxel(i,j,k+1)==2) {
-                                //Si le voxel devant est un voxel de l'extérieur
+                                //Si le voxel devant est un voxel de l'extrieur
                                 //Sommets formant la face : 5, 6, 3, 4
                                 x = i; y = j; z = k+1;
                                 ajouteSommet(x,y,z);
@@ -416,9 +412,9 @@ class Voxellisation {
         void ajouteSommet(int x, int y, int z) {
             std::map<int,int>::iterator index_sommet;
             if((index_sommet=m_indexes.find(x + y*m_taille_x + z*m_taille_x*m_taille_y))==m_indexes.end()) {
-                //Si le sommet n'a pas encore été ajouté
-                m_indexes[x + y*m_taille_x + z*m_taille_x*m_taille_y] = m_sommets.size();   //On précise l'index du nouveau sommet
-                m_sommets.push_back(Geom::Vec3f(m_bb_min[0]+x*m_transfo[0], m_bb_min[1]+y*m_transfo[1], m_bb_min[2]+z*m_transfo[2]));    //On ajoute le sommet avec ses coordonnées réelles
+                //Si le sommet n'a pas encore t ajout
+                m_indexes[x + y*m_taille_x + z*m_taille_x*m_taille_y] = m_sommets.size();   //On prcise l'index du nouveau sommet
+                m_sommets.push_back(Geom::Vec3f(m_bb_min[0]+x*m_transfo[0], m_bb_min[1]+y*m_transfo[1], m_bb_min[2]+z*m_transfo[2]));    //On ajoute le sommet avec ses coordonnes relles
             }
             if(index_sommet==m_indexes.end()) {
                 m_faces.push_back(m_sommets.size()-1);  //On ajoute le sommet au tableau renseignant les faces
@@ -429,14 +425,14 @@ class Voxellisation {
         }
 
         /*
-          * Fonction qui remplit une voxellisation en regardant l'ensemble des voxels qui n'ont pas encore été
+          * Fonction qui remplit une voxellisation en regardant l'ensemble des voxels qui n'ont pas encore t
           */
         void remplit() {
             for(int i=0; i<m_taille_x-2; ++i) {
                 for(int j=0; j<m_taille_y-2; ++j) {
                     for(int k=0; k<m_taille_z-2; ++k) {
                         if(getVoxel(i,j,k)==0) {
-                            //Si le voxel fait partie de l'intérieur
+                            //Si le voxel fait partie de l'intrieur
                             addVoxel(i,j,k,1);
                         }
                     }
@@ -476,34 +472,34 @@ class Voxellisation {
                     for(int j=0; j<m_taille_y-2; ++j) {
                         for(int k=0; k<m_taille_z-2; ++k) {
                             if(getVoxel(i,j,k)==1) {
-                                //Si le voxel appartient à la surface de la cage
+                                //Si le voxel appartient  la surface de la cage
                                 if(getVoxel(i-1,j,k)==2) {
-                                    //Si le voxel de gauche appartient à l'extérieur
+                                    //Si le voxel de gauche appartient  l'extrieur
                                     addVoxel(i-1,j,k,3);
                                     element_ajoutes.push_back(Geom::Vec3i(i-1,j,k));
                                 }
                                 if(getVoxel(i+1,j,k)==2) {
-                                    //Si le voxel de droite appartient à l'extérieur
+                                    //Si le voxel de droite appartient  l'extrieur
                                     addVoxel(i+1,j,k,3);
                                     element_ajoutes.push_back(Geom::Vec3i(i+1,j,k));
                                 }
                                 if(getVoxel(i,j-1,k)==2) {
-                                    //Si le voxel en dessous appartient à l'extérieur
+                                    //Si le voxel en dessous appartient  l'extrieur
                                     addVoxel(i,j-1,k,3);
                                     element_ajoutes.push_back(Geom::Vec3i(i,j-1,k));
                                 }
                                 if(getVoxel(i,j+1,k)==2) {
-                                    //Si le voxel au dessous appartient à l'extérieur
+                                    //Si le voxel au dessous appartient  l'extrieur
                                     addVoxel(i,j+1,k,3);
                                     element_ajoutes.push_back(Geom::Vec3i(i,j+1,k));
                                 }
                                 if(getVoxel(i,j,k-1)==2) {
-                                    //Si le voxel de derrière appartient à l'extérieur
+                                    //Si le voxel de derrire appartient  l'extrieur
                                     addVoxel(i,j,k-1,3);
                                     element_ajoutes.push_back(Geom::Vec3i(i,j,k-1));
                                 }
                                 if(getVoxel(i,j,k+1)==2) {
-                                    //Si le voxel de devant appartient à l'extérieur
+                                    //Si le voxel de devant appartient  l'extrieur
                                     addVoxel(i,j,k+1,3);
                                     element_ajoutes.push_back(Geom::Vec3i(i,j,k+1));
                                 }
@@ -512,7 +508,7 @@ class Voxellisation {
                     }
                 }
                 for(it = element_ajoutes.begin(); it!=element_ajoutes.end(); ++it) {
-                    //On remplace la valeur temporaire affectée aux voxels ajoutés
+                    //On remplace la valeur temporaire affecte aux voxels ajouts
                     addVoxel(*it,1);
                 }
                 element_ajoutes.clear();
@@ -533,6 +529,29 @@ class Voxellisation {
 
         int getNbFaces() { return m_faces.size()/4; }
 
+        void checkVoxels(int type=1) {
+            int voxels = 0;
+            for(int i=0; i<m_taille_x; ++i) {
+                for(int j=0; j<m_taille_y; ++j) {
+                    for(int k=0; k<m_taille_z; ++k) {
+                        voxels += m_data[i+ j*m_taille_x + k*m_taille_x*m_taille_y]==type?1:0;
+                    }
+                }
+            }
+            CGoGNout << "Il y a " << voxels << " voxel(s)" << CGoGNendl;
+        }
+
+        void checkSommets() {
+            for(int i=0; i<m_sommets.size(); ++i) {
+                CGoGNout << "Sommet : " << m_sommets[i] << CGoGNendl;
+            }
+        }
+
+        void check() {
+            CGoGNout << "m_bb_min  = {" << m_bb_min << "}" << CGoGNendl;
+            CGoGNout << "m_transfo  = {" << m_transfo << "}" << CGoGNendl;
+        }
+
 
     private:
         int m_size;
@@ -547,11 +566,11 @@ class Voxellisation {
         Geom::Vec3f m_bb_max;
 
         std::vector<int> m_data;    //Vecteur renseignant l'ensemble des voxels entourant le maillage
-        std::map<int,int> m_indexes;    //Hashmap qui permet de vérifier si un sommet a déjà été ajouté à la liste des sommets
+        std::map<int,int> m_indexes;    //Hashmap qui permet de vrifier si un sommet a dj t ajout  la liste des sommets
 
     public:
-        std::vector<Geom::Vec3f> m_sommets; //Vecteur renseignant les coordonnées réelles des sommets de la surface
-        std::vector<int> m_faces;   //Vecteur renseignant les sommets attribués à chaque face
+        std::vector<Geom::Vec3f> m_sommets; //Vecteur renseignant les coordonnes relles des sommets de la surface
+        std::vector<int> m_faces;   //Vecteur renseignant les sommets attribus  chaque face
 
     public:
         Geom::Vec3f m_transfo;
