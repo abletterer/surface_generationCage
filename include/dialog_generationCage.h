@@ -23,10 +23,10 @@ class Dialog_GenerationCage : public QDialog, public Ui::Dialog_GenerationCage
 public:
     Dialog_GenerationCage(SCHNApps* s);
 
-    void updateResolutionsFromPlugin(Geom::Vec3i* resolutions) {
-        spin_resolution_x->setValue(resolutions->data()[0]);
-        spin_resolution_y->setValue(resolutions->data()[1]);
-        spin_resolution_z->setValue(resolutions->data()[2]);
+    void updateResolutionsFromPlugin(Geom::Vec3i resolutions) {
+        spin_resolution_x->setValue(resolutions[0]);
+        spin_resolution_y->setValue(resolutions[1]);
+        spin_resolution_z->setValue(resolutions[2]);
     }
 
     void updateNiveauDilatationFromPlugin(int dilatation) {

@@ -27,9 +27,9 @@ struct MapParameters
 
     bool m_initialized;
 
-    Algo::Surface::Modelisation::Voxellisation* m_voxellisation;
-    Geom::Vec3i* m_resolutions;
-    Geom::BoundingBox<PFP2::VEC3>* m_bb;
+    Algo::Surface::Modelisation::Voxellisation m_voxellisation;
+    Geom::Vec3i m_resolutions;
+    Geom::BoundingBox<PFP2::VEC3> m_bb;
     int m_dilatation;
     bool m_toVoxellise;
     bool m_independant;
