@@ -49,7 +49,7 @@ class Voxellisation {
    public:
         Voxellisation(Geom::Vec3i resolutions= Geom::Vec3i(), Geom::BoundingBox<Geom::Vec3f> bb=Geom::BoundingBox<PFP::VEC3>())
             :   m_taille_x(resolutions[0]+2), m_taille_y(resolutions[1]+2), m_taille_z(resolutions[2]+2), m_transfo(3),
-              m_bb_min(Geom::Vec3f()), m_bb_max(Geom::Vec3f()), m_data(m_taille_x*m_taille_y*m_taille_z, 0),
+              m_bb_min(bb.min()), m_bb_max(bb.max()), m_data(m_taille_x*m_taille_y*m_taille_z, 0),
             m_indexes(), m_sommets(), m_faces()
         {
             m_size = 0;
@@ -58,13 +58,6 @@ class Voxellisation {
             m_transfo[0] = (m_bb_max[0]-m_bb_min[0])/(m_taille_x-2);
             m_transfo[1] = (m_bb_max[1]-m_bb_min[1])/(m_taille_y-2);
             m_transfo[2] = (m_bb_max[2]-m_bb_min[2])/(m_taille_z-2);
-        }
-
-        ~Voxellisation() {
-            m_data.clear();
-            m_indexes.clear();
-            m_sommets.clear();
-            m_faces.clear();
         }
 
         void removeVoxel(int x, int y, int z) {
