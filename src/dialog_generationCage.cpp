@@ -23,14 +23,14 @@ Dialog_GenerationCage::Dialog_GenerationCage(SCHNApps* s) :
     foreach(MapHandlerGen* map,  m_schnapps->getMapSet().values())
     {
         QListWidgetItem* item = new QListWidgetItem(map->getName(), list_maps);
-        item->setCheckState(Qt::Unchecked);
+        item->setFlags(Qt::ItemIsSelectable | Qt::ItemIsEnabled);
     }
 }
 
 void Dialog_GenerationCage::addMapToList(MapHandlerGen* m)
 {
     QListWidgetItem* item = new QListWidgetItem(m->getName(), list_maps);
-    item->setCheckState(Qt::Unchecked);
+    item->setFlags(Qt::ItemIsSelectable | Qt::ItemIsEnabled);
 }
 
 void Dialog_GenerationCage::removeMapFromList(MapHandlerGen* m)

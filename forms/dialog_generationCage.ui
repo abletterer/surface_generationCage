@@ -39,7 +39,10 @@
     </layout>
    </item>
    <item>
-    <widget class="QGroupBox" name="groupBox">
+    <widget class="QGroupBox" name="group_resolution">
+     <property name="enabled">
+      <bool>false</bool>
+     </property>
      <property name="title">
       <string>Resolution management</string>
      </property>
@@ -77,7 +80,11 @@
          </widget>
         </item>
         <item>
-         <widget class="QSpinBox" name="spin_resolution_x"/>
+         <widget class="QSpinBox" name="spin_resolution_x">
+          <property name="maximum">
+           <number>99999</number>
+          </property>
+         </widget>
         </item>
         <item>
          <widget class="QLabel" name="label_4">
@@ -87,7 +94,11 @@
          </widget>
         </item>
         <item>
-         <widget class="QSpinBox" name="spin_resolution_y"/>
+         <widget class="QSpinBox" name="spin_resolution_y">
+          <property name="maximum">
+           <number>99999</number>
+          </property>
+         </widget>
         </item>
         <item>
          <widget class="QLabel" name="label_5">
@@ -97,7 +108,11 @@
          </widget>
         </item>
         <item>
-         <widget class="QSpinBox" name="spin_resolution_z"/>
+         <widget class="QSpinBox" name="spin_resolution_z">
+          <property name="maximum">
+           <number>99999</number>
+          </property>
+         </widget>
         </item>
         <item>
          <spacer name="horizontalSpacer_2">
@@ -120,7 +135,7 @@
    <item>
     <widget class="QGroupBox" name="group_dilate">
      <property name="enabled">
-      <bool>true</bool>
+      <bool>false</bool>
      </property>
      <property name="title">
       <string>Dilation management</string>
@@ -196,7 +211,7 @@
    <item>
     <widget class="QGroupBox" name="group_generate">
      <property name="enabled">
-      <bool>true</bool>
+      <bool>false</bool>
      </property>
      <property name="title">
       <string>Surface generation</string>
@@ -227,9 +242,6 @@
        <layout class="QHBoxLayout" name="horizontalLayout_4">
         <item>
          <widget class="QPushButton" name="button_generate">
-          <property name="enabled">
-           <bool>true</bool>
-          </property>
           <property name="text">
            <string>Generate</string>
           </property>
@@ -237,9 +249,6 @@
         </item>
         <item>
          <widget class="QPushButton" name="button_close">
-          <property name="enabled">
-           <bool>true</bool>
-          </property>
           <property name="text">
            <string>Close</string>
           </property>

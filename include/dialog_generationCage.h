@@ -36,12 +36,13 @@ public:
     /*
       * Fonction qui met  jour l'apparence de l'interface en fonction de la configuration de chaque carte
       */
-    void updateAppearanceFromPlugin(bool independant, bool initialized, bool extractionFaces) {
+    void updateAppearanceFromPlugin(bool independant, bool initialized) {
+        group_resolution->setEnabled(true);
+        group_generate->setEnabled(true);
+        group_dilate->setEnabled(initialized);
         check_resolution->setChecked(independant);
         spin_resolution_y->setEnabled(independant);
         spin_resolution_z->setEnabled(independant);
-        group_dilate->setEnabled(initialized);
-        radio_extractionFaces->setEnabled(extractionFaces);
     }
 
 private:

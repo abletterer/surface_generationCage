@@ -6,6 +6,7 @@
 #include "dialog_generationCage.h"
 
 #include "Algo/Modelisation/voxellisation.h"
+#include "Algo/Modelisation/triangulation.h"
 #include "Algo/MC/marchingcube.h"
 #include "Algo/Import/import.h"
 
@@ -34,6 +35,7 @@ struct MapParameters
     bool m_toVoxellise;
     bool m_independant;
     bool m_extractionFaces;
+    bool m_toCalculateResolutions;
 };
 
 class Surface_GenerationCage_Plugin : public PluginProcessing
@@ -60,6 +62,7 @@ private slots:
 
     void generationCageFromDialog();
     void dilaterVoxellisationFromDialog();
+    void reinitialiserVoxellisationFromDialog();
 
     void currentMapSelectedChangedFromDialog();
     void currentAttributeIndexChangedFromDialog(QString nameAttr);
@@ -72,9 +75,10 @@ private slots:
 
     void generationCage(const QString& mapName, const QString& positionAttributeName);
     void dilaterVoxellisation(const QString& mapName, const QString& positionAttributeName);
+    void reinitialiserVoxellisation(const QString& mapName, const QString& positionAttributeName);
 
     void calculateResolutions(const QString& mapName, const QString& positionAttributeName);
-    void updateResolutions(const QString& mapName, const QString& positionAttributeName, bool independant);
+    void updateResolutions(const QString& mapName, const QString& positionAttributeName);
 
     void extractionCarte(const QString& mapName, const QString& positionAttributeName);
 
