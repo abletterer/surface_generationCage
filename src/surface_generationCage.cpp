@@ -75,7 +75,11 @@ void Surface_GenerationCage_Plugin::mapRemoved(MapHandlerGen *map)
 
 void Surface_GenerationCage_Plugin::attributeModified(unsigned int orbit, QString nameAttr)
 {
-    //Rien pour le moment
+    QList<QListWidgetItem*> currentItems = m_generationCageDialog->list_maps->selectedItems();
+    if(!currentItems.empty()) {
+        MapParameters& p = h_parameterSet[currentItems[0]->text()+nameAttr];
+        p.m_toVoxellise = true;
+    }
 }
 
 void Surface_GenerationCage_Plugin::openGenerationCageDialog()
@@ -121,7 +125,11 @@ void Surface_GenerationCage_Plugin::generationCage(const QString& mapName, const
             CGoGNout << "L'attribut de position choisi pour la carte sélectionnée n'est pas valide." << CGoGNendl;
             return;
         }
+
         p.m_bb = Algo::Geometry::computeBoundingBox<PFP2>(*selectedMap, position);
+
+        CGoGNout << "p.m_bb.min() = " << p.m_bb.min() << CGoGNendl;
+
         calculateResolutions(mapName, positionAttributeName);
         voxellise(mapName, positionAttributeName);
         p.m_toVoxellise = false;
@@ -137,7 +145,6 @@ void Surface_GenerationCage_Plugin::dilaterVoxellisation(const QString& mapName,
     MapParameters& p = h_parameterSet[mapName+positionAttributeName];
 
     p.m_voxellisation.dilate();
-    p.m_voxellisation.extractionBord();
     extractionCarte(mapName, positionAttributeName);
     m_generationCageDialog->updateNiveauDilatationFromPlugin(++p.m_dilatation);
 }
