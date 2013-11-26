@@ -11,8 +11,7 @@ namespace SCHNApps
 
 Dialog_GenerationCage::Dialog_GenerationCage(SCHNApps* s) :
     m_schnapps(s),
-    m_selectedMap(NULL),
-    m_voxellisationNeeded(true)
+    m_selectedMap(NULL)
 {
     setupUi(this);
 
@@ -20,12 +19,6 @@ Dialog_GenerationCage::Dialog_GenerationCage(SCHNApps* s) :
     connect(m_schnapps, SIGNAL(mapRemoved(MapHandlerGen*)), this, SLOT(removeMapFromList(MapHandlerGen*)));
 
     connect(list_maps, SIGNAL(itemSelectionChanged()), this, SLOT(selectedMapChanged()));
-    connect(combo_positionAttribute, SIGNAL(currentIndexChanged(QString)), this, SLOT(selectedPositionAttributeChanged(QString)));
-    connect(check_resolution, SIGNAL(toggled(bool)), this, SLOT(resolutionTriggered(bool)));
-
-    connect(spin_resolution_x, SIGNAL(editingFinished()), this, SLOT(resolutionChanged()));
-    connect(spin_resolution_y, SIGNAL(editingFinished()), this, SLOT(resolutionChanged()));
-    connect(spin_resolution_z, SIGNAL(editingFinished()), this, SLOT(resolutionChanged()));
 
     foreach(MapHandlerGen* map,  m_schnapps->getMapSet().values())
     {
@@ -97,28 +90,6 @@ void Dialog_GenerationCage::selectedMapChanged()
     }
     else
         m_selectedMap = NULL;
-    m_voxellisationNeeded = true;
-}
-
-void Dialog_GenerationCage::selectedPositionAttributeChanged(QString nameAttr) {
-    m_voxellisationNeeded = true;
-}
-
-void Dialog_GenerationCage::resolutionTriggered(bool b) {
-    if(b) {
-        //Les résolutions sont définies indépendamment les unes des autres
-        spin_resolution_y->setEnabled(true);
-        spin_resolution_z->setEnabled(true);
-    }
-    else {
-        //Les résolutions sont définies en fonction de celle en x
-        spin_resolution_y->setEnabled(false);
-        spin_resolution_z->setEnabled(false);
-    }
-}
-
-void Dialog_GenerationCage::resolutionChanged() {
-    m_voxellisationNeeded = true;
 }
 
 } // namespace SCHNApps

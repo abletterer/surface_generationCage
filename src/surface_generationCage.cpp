@@ -11,16 +11,16 @@ namespace SCHNApps
 MapParameters::MapParameters() :
     m_initialized(false),
     m_voxellisation(NULL),
-    m_resolutions(NULL),
+    m_resolutions(),
     m_bb(NULL),
     m_dilatation(0),
-    m_toVoxellise(true)
+    m_toVoxellise(true),
+    m_independant(true)
 {}
 
 void MapParameters::start(const QString& mapName, const QString& positionAttributeName) {
     if(!m_initialized) {
         m_initialized = true;
-        m_voxellisation = Algo::Surface::Modelisation::Voxellisation();
     }
 }
 
@@ -43,6 +43,11 @@ bool Surface_GenerationCage_Plugin::enable()
     connect(m_generationCageDialog->button_generate, SIGNAL(clicked()), this, SLOT(generationCageFromDialog()));
     connect(m_generationCageDialog->button_dilaterVoxellisation, SIGNAL(clicked()), this, SLOT(dilaterVoxellisationFromDialog()));
 
+    connect(m_generationCageDialog->list_maps, SIGNAL(itemSelectionChanged()), this, SLOT(currentMapSelectedChangedFromDialog()));
+    connect(m_generationCageDialog->combo_positionAttribute, SIGNAL(currentIndexChanged(QString)), this, SLOT(currentAttributeIndexChangedFromDialog(QString)));
+
+    connect(m_generationCageDialog->check_resolution, SIGNAL(toggled(bool)), this, SLOT(resolutionToggledFromDialog(bool)));
+
     connect(m_schnapps, SIGNAL(mapAdded(MapHandlerGen*)), this, SLOT(mapAdded(MapHandlerGen*)));
     connect(m_schnapps, SIGNAL(mapRemoved(MapHandlerGen*)), this, SLOT(mapRemoved(MapHandlerGen*)));
 
@@ -58,6 +63,8 @@ void Surface_GenerationCage_Plugin::disable()
 
     disconnect(m_generationCageDialog->button_generate, SIGNAL(clicked()), this, SLOT(generationCageFromDialog()));
     disconnect(m_generationCageDialog->button_dilaterVoxellisation, SIGNAL(clicked()), this, SLOT(dilaterVoxellisationFromDialog()));
+
+    disconnect(m_generationCageDialog->list_maps, SIGNAL(itemSelectionChanged()), this, SLOT(updateResolutionsFromDialog()));
 
     disconnect(m_schnapps, SIGNAL(mapAdded(MapHandlerGen*)), this, SLOT(mapAdded(MapHandlerGen*)));
     disconnect(m_schnapps, SIGNAL(mapRemoved(MapHandlerGen*)), this, SLOT(mapRemoved(MapHandlerGen*)));
@@ -75,11 +82,7 @@ void Surface_GenerationCage_Plugin::mapRemoved(MapHandlerGen *map)
 
 void Surface_GenerationCage_Plugin::attributeModified(unsigned int orbit, QString nameAttr)
 {
-    QList<QListWidgetItem*> currentItems = m_generationCageDialog->list_maps->selectedItems();
-    if(!currentItems.empty()) {
-        MapParameters& p = h_parameterSet[currentItems[0]->text()+nameAttr];
-        p.m_toVoxellise = true;
-    }
+    //Rien pour le moment
 }
 
 void Surface_GenerationCage_Plugin::openGenerationCageDialog()
@@ -112,6 +115,33 @@ void Surface_GenerationCage_Plugin::dilaterVoxellisationFromDialog() {
     }
 }
 
+void Surface_GenerationCage_Plugin::currentMapSelectedChangedFromDialog() {
+    QList<QListWidgetItem*> currentItems = m_generationCageDialog->list_maps->selectedItems();
+    if(!currentItems.empty() && m_generationCageDialog->combo_positionAttribute->currentIndex()!=-1) {
+        MapParameters p = h_parameterSet[currentItems[0]->text()+m_generationCageDialog->combo_positionAttribute->currentText()];
+        m_generationCageDialog->updateAppearanceFromPlugin(p.m_independant, p.m_resolutions[0]!=0);
+        m_generationCageDialog->updateResolutionsFromPlugin(p.m_resolutions);
+        m_generationCageDialog->updateNiveauDilatationFromPlugin(p.m_dilatation);
+    }
+}
+
+void Surface_GenerationCage_Plugin::currentAttributeIndexChangedFromDialog(QString nameAttr) {
+    QList<QListWidgetItem*> currentItems = m_generationCageDialog->list_maps->selectedItems();
+    if(!currentItems.empty()) {
+        MapParameters p = h_parameterSet[currentItems[0]->text()+nameAttr];
+        CGoGNout << p.m_resolutions << CGoGNendl;
+        m_generationCageDialog->updateAppearanceFromPlugin(p.m_independant, p.m_resolutions[0]!=0);
+        m_generationCageDialog->updateResolutionsFromPlugin(p.m_resolutions);
+        m_generationCageDialog->updateNiveauDilatationFromPlugin(p.m_dilatation);
+    }
+}
+
+void Surface_GenerationCage_Plugin::resolutionToggledFromDialog(bool b) {
+    m_generationCageDialog->spin_resolution_y->setEnabled(b);
+    m_generationCageDialog->spin_resolution_z->setEnabled(b);
+}
+
+
 void Surface_GenerationCage_Plugin::generationCage(const QString& mapName, const QString& positionAttributeName) {
     MapParameters& p = h_parameterSet[mapName+positionAttributeName];
 
@@ -128,11 +158,8 @@ void Surface_GenerationCage_Plugin::generationCage(const QString& mapName, const
 
         p.m_bb = Algo::Geometry::computeBoundingBox<PFP2>(*selectedMap, position);
 
-        CGoGNout << "p.m_bb.min() = " << p.m_bb.min() << CGoGNendl;
-
         calculateResolutions(mapName, positionAttributeName);
         voxellise(mapName, positionAttributeName);
-        p.m_toVoxellise = false;
     }
     p.m_voxellisation.marqueVoxelsExterieurs();
     p.m_voxellisation.remplit();
@@ -171,6 +198,8 @@ void Surface_GenerationCage_Plugin::extractionCarte(const QString& mapName, cons
     if(m_generationCageDialog->radio_extractionFaces->isChecked()) {
         //Si l'algorithme choisi est celui de l'extraction de faces
         p.m_voxellisation.extractionBord();
+
+        p.m_voxellisation.checkSommets();
 
         std::vector<std::string> attrNamesCage;
         //MERGE CLOSE VERTICES A 'TRUE' FAIT PLANTER L'APPLICATION
@@ -312,11 +341,15 @@ void Surface_GenerationCage_Plugin::voxellise(const QString& mapName, const QStr
         polygone.clear();
         for(Dart e = trav_face_vert.begin(); e!=trav_face_vert.end(); e=trav_face_vert.next()) {
             //On récupère les sommets composants la face courante
-            voxel[e].setIndexes(getVoxelIndex(mapName, positionAttributeName, position[e]));
+            if(!voxel[e].isInitialise())
+                voxel[e].setIndexes(getVoxelIndex(mapName, positionAttributeName, position[e]));
             polygone.push_back(voxel[e].getIndexes());
         }
         p.m_voxellisation.voxellisePolygone(polygone);
     }
+
+    p.m_toVoxellise = false;
+    m_generationCageDialog->updateAppearanceFromPlugin(p.m_independant, p.m_resolutions[0]!=0);
 
     CGoGNout << "Fin de la voxellisation. Il y a " << p.m_voxellisation.size() << " voxel(s) qui entourent le maillage" << CGoGNendl;
 }

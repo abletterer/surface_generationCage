@@ -32,6 +32,7 @@ struct MapParameters
     Geom::BoundingBox<PFP2::VEC3> m_bb;
     int m_dilatation;
     bool m_toVoxellise;
+    bool m_independant;
 };
 
 class Surface_GenerationCage_Plugin : public PluginProcessing
@@ -57,6 +58,9 @@ private slots:
     void openGenerationCageDialog();
     void generationCageFromDialog();
     void dilaterVoxellisationFromDialog();
+    void currentMapSelectedChangedFromDialog();
+    void currentAttributeIndexChangedFromDialog(QString nameAttr);
+    void resolutionToggledFromDialog(bool b);
 
     void generationCage(const QString& mapName, const QString& positionAttributeName);
     void dilaterVoxellisation(const QString& mapName, const QString& positionAttributeName);
@@ -73,11 +77,10 @@ private:
     Dialog_GenerationCage* m_generationCageDialog;
     QAction* m_generationCageAction;
 
-    QHash<QString, MapParameters> h_parameterSet;
-
     bool m_voxellisationNeeded;
 
-
+public:
+    QHash<QString, MapParameters> h_parameterSet;
 };
 
 } // namespace SCHNApps

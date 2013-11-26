@@ -13,6 +13,8 @@ namespace SCHNApps
 
 class SCHNApps;
 class MapHandlerGen;
+class Surface_GenerationCage_Plugin;
+class MapParameters;
 
 class Dialog_GenerationCage : public QDialog, public Ui::Dialog_GenerationCage
 {
@@ -20,9 +22,6 @@ class Dialog_GenerationCage : public QDialog, public Ui::Dialog_GenerationCage
 
 public:
     Dialog_GenerationCage(SCHNApps* s);
-
-    bool isVoxellisationNeeded() { return m_voxellisationNeeded; }
-    void setVoxellisationNeeded(bool needed) { m_voxellisationNeeded = needed; }
 
     void updateResolutionsFromPlugin(const Geom::Vec3i resolutions) {
         spin_resolution_x->setValue(resolutions[0]);
@@ -34,11 +33,19 @@ public:
         line_niveauDilatation->setText(QString::number(dilatation));
     }
 
+    /*
+      * Fonction qui met  jour l'apparence de l'interface en fonction de la configuration de chaque carte
+      */
+    void updateAppearanceFromPlugin(bool independant, bool initialized) {
+        check_resolution->setChecked(independant);
+        spin_resolution_y->setEnabled(independant);
+        spin_resolution_z->setEnabled(independant);
+        group_dilate->setEnabled(initialized);
+    }
+
 private:
     SCHNApps* m_schnapps;
     MapHandlerGen* m_selectedMap;
-
-    bool m_voxellisationNeeded;
 
 public slots:
     void addMapToList(MapHandlerGen* m);
@@ -46,9 +53,6 @@ public slots:
     void addAttributeToList(unsigned int orbit, const QString& nameAttr);
 
     void selectedMapChanged();
-    void selectedPositionAttributeChanged(QString positionName);
-    void resolutionTriggered(bool b);
-    void resolutionChanged();
 };
 
 } // namespace SCHNApps
