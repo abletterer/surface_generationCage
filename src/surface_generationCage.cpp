@@ -143,7 +143,7 @@ void Surface_GenerationCage_Plugin::reinitialiserVoxellisationFromDialog() {
 void Surface_GenerationCage_Plugin::currentMapSelectedChangedFromDialog() {
     QList<QListWidgetItem*> currentItems = m_generationCageDialog->list_maps->selectedItems();
     if(!currentItems.empty() && m_generationCageDialog->combo_positionAttribute->currentIndex()!=-1) {
-        MapParameters p = h_parameterSet[currentItems[0]->text()+m_generationCageDialog->combo_positionAttribute->currentText()];
+        MapParameters& p = h_parameterSet[currentItems[0]->text()+m_generationCageDialog->combo_positionAttribute->currentText()];
         m_generationCageDialog->updateAppearanceFromPlugin(p.m_independant, p.m_resolutions[0]!=0);
         m_generationCageDialog->updateResolutionsFromPlugin(p.m_resolutions);
         m_generationCageDialog->updateNiveauDilatationFromPlugin(p.m_dilatation);
@@ -153,7 +153,7 @@ void Surface_GenerationCage_Plugin::currentMapSelectedChangedFromDialog() {
 void Surface_GenerationCage_Plugin::currentAttributeIndexChangedFromDialog(QString nameAttr) {
     QList<QListWidgetItem*> currentItems = m_generationCageDialog->list_maps->selectedItems();
     if(!currentItems.empty() && m_generationCageDialog->combo_positionAttribute->currentIndex()!=-1) {
-        MapParameters p = h_parameterSet[currentItems[0]->text()+nameAttr];
+        MapParameters& p = h_parameterSet[currentItems[0]->text()+nameAttr];
         m_generationCageDialog->updateAppearanceFromPlugin(p.m_independant, p.m_resolutions[0]!=0);
         m_generationCageDialog->updateResolutionsFromPlugin(p.m_resolutions);
         m_generationCageDialog->updateNiveauDilatationFromPlugin(p.m_dilatation);
@@ -161,23 +161,29 @@ void Surface_GenerationCage_Plugin::currentAttributeIndexChangedFromDialog(QStri
 }
 
 void Surface_GenerationCage_Plugin::resolutionToggledFromDialog(bool b) {
-    m_generationCageDialog->spin_resolution_y->setEnabled(b);
-    m_generationCageDialog->spin_resolution_z->setEnabled(b);
+    QList<QListWidgetItem*> currentItems = m_generationCageDialog->list_maps->selectedItems();
+    if(!currentItems.empty() && m_generationCageDialog->combo_positionAttribute->currentIndex()!=-1) {
+        MapParameters& p = h_parameterSet[currentItems[0]->text()+m_generationCageDialog->combo_positionAttribute->currentText()];
+        p.m_independant = b;
+        m_generationCageDialog->updateAppearanceFromPlugin(p.m_independant, p.m_resolutions[0]!=0);
+    }
 }
 
 void Surface_GenerationCage_Plugin::resolutionModifiedFromDialog() {
     QList<QListWidgetItem*> currentItems = m_generationCageDialog->list_maps->selectedItems();
     if(!currentItems.empty()) {
-        MapParameters p = h_parameterSet[currentItems[0]->text()+m_generationCageDialog->combo_positionAttribute->currentText()];
+        MapParameters& p = h_parameterSet[currentItems[0]->text()+m_generationCageDialog->combo_positionAttribute->currentText()];
         p.m_toVoxellise = true;
-        p.m_toCalculateResolutions = true;
+        p.m_resolutions[0] = m_generationCageDialog->spin_resolution_x->text().toInt();
+        p.m_resolutions[1] = m_generationCageDialog->spin_resolution_y->text().toInt();
+        p.m_resolutions[2] = m_generationCageDialog->spin_resolution_z->text().toInt();
     }
 }
 
 void Surface_GenerationCage_Plugin::surfaceExtractionToggledFromDialog(bool b){
     QList<QListWidgetItem*> currentItems = m_generationCageDialog->list_maps->selectedItems();
     if(!currentItems.empty()) {
-        MapParameters p = h_parameterSet[currentItems[0]->text()+m_generationCageDialog->combo_positionAttribute->currentText()];
+        MapParameters& p = h_parameterSet[currentItems[0]->text()+m_generationCageDialog->combo_positionAttribute->currentText()];
         p.m_extractionFaces = b;
     }
 }
@@ -201,6 +207,7 @@ void Surface_GenerationCage_Plugin::generationCage(const QString& mapName, const
         if(p.m_toCalculateResolutions) {
             calculateResolutions(mapName, positionAttributeName);
         }
+
         voxellise(mapName, positionAttributeName);
         p.m_voxellisation.marqueVoxelsExterieurs();
         p.m_voxellisation.remplit();
