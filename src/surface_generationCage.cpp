@@ -11,7 +11,7 @@ namespace SCHNApps
 MapParameters::MapParameters() :
     m_initialized(false),
     m_voxellisation(NULL),
-    m_resolutions(NULL),
+    m_resolutions(),
     m_bb(NULL),
     m_dilatation(0),
     m_toVoxellise(true),
