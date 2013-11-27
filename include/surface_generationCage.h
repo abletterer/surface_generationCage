@@ -10,6 +10,8 @@
 #include "Algo/MC/marchingcube.h"
 #include "Algo/Import/import.h"
 
+#include "Utils/chrono.h"
+
 #include "voxel.h"
 
 namespace CGoGN

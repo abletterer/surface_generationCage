@@ -247,8 +247,10 @@ void Surface_GenerationCage_Plugin::dilaterVoxellisation(const QString& mapName,
 
             voxellise(mapName, positionAttributeName);
         }
-
+        Utils::Chrono chrono;
+        chrono.start();
         p.m_voxellisation.dilate();
+        CGoGNout << "Temps de dilatation : " << chrono.elapsed() << " ms." << CGoGNendl;
         extractionCarte(mapName, positionAttributeName);
         m_generationCageDialog->updateNiveauDilatationFromPlugin(++p.m_dilatation);
     }
@@ -284,19 +286,24 @@ void Surface_GenerationCage_Plugin::extractionCarte(const QString& mapName, cons
             mh->registerAttribute(positionCage);
         }
 
+        Utils::Chrono chrono;
+        chrono.start();
         if(p.m_extractionFaces) {
             //Si l'algorithme choisi est celui de l'extraction de faces
             p.m_voxellisation.extractionBord();
 
             std::vector<std::string> attrNamesCage;
-            //MERGE CLOSE VERTICES A 'TRUE' FAIT PLANTER L'APPLICATION
             if(!Algo::Surface::Import::importVoxellisation<PFP2>(*mapCage, p.m_voxellisation, attrNamesCage, true))
             {
                 CGoGNerr << "Impossible d'importer la voxellisation" << CGoGNendl ;
                 return;
             }
+
             Algo::Surface::Modelisation::EarTriangulation<PFP2> triang =  Algo::Surface::Modelisation::EarTriangulation<PFP2>(*mapCage);
             triang.triangule();
+
+            CGoGNout << "Temps d'extraction des faces : " << chrono.elapsed() << " ms." << CGoGNendl;
+
             positionCage = mapCage->getAttribute<PFP2::VEC3, VERTEX>(attrNamesCage[0]);
         }
         else {
@@ -307,6 +314,9 @@ void Surface_GenerationCage_Plugin::extractionCarte(const QString& mapName, cons
             Algo::Surface::MC::MarchingCube<int, Algo::Surface::MC::WindowingEqual,PFP2> marching_cube(image, mapCage, positionCage, windowing, false);
             marching_cube.simpleMeshing();
             marching_cube.recalPoints(p.m_bb.min()-Geom::Vec3f(image->getVoxSizeX(), image->getVoxSizeY(), image->getVoxSizeZ()));
+
+            CGoGNout << "Temps de réalisation du Marching Cube : " << chrono.elapsed() << " ms." << CGoGNendl;
+
             delete image;
             positionCage = mapCage->getAttribute<PFP2::VEC3, VERTEX>("position");
         }
@@ -417,6 +427,8 @@ void Surface_GenerationCage_Plugin::voxellise(const QString& mapName, const QStr
     MapParameters& p = h_parameterSet[mapName+positionAttributeName];
 
     if(p.m_initialized) {
+        Utils::Chrono chrono;
+        chrono.start();
         MapHandler<PFP2>* mh = static_cast<MapHandler<PFP2>*>(m_schnapps->getMap(mapName));
         PFP2::MAP* selectedMap = mh->getMap();
 
@@ -452,7 +464,7 @@ void Surface_GenerationCage_Plugin::voxellise(const QString& mapName, const QStr
         p.m_toVoxellise = false;
         m_generationCageDialog->updateAppearanceFromPlugin(p.m_independant, p.m_resolutions[0]!=0);
 
-        CGoGNout << "Fin de la voxellisation. Il y a " << p.m_voxellisation.size() << " voxel(s) qui entourent le maillage" << CGoGNendl;
+        CGoGNout << "Temps de voxellisation : " << chrono.elapsed() << " ms" << CGoGNendl;
     }
 }
 
