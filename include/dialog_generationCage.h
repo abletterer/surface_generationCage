@@ -14,7 +14,7 @@ namespace SCHNApps
 class SCHNApps;
 class MapHandlerGen;
 class Surface_GenerationCage_Plugin;
-class MapParameters;
+class MapCageParameters;
 
 class Dialog_GenerationCage : public QDialog, public Ui::Dialog_GenerationCage
 {
