@@ -51,9 +51,9 @@ bool Surface_GenerationCage_Plugin::enable()
     connect(m_generationCageDialog->list_maps, SIGNAL(itemSelectionChanged()), this, SLOT(currentMapSelectedChangedFromDialog()));
     connect(m_generationCageDialog->combo_positionAttribute, SIGNAL(currentIndexChanged(QString)), this, SLOT(currentAttributeIndexChangedFromDialog(QString)));
     connect(m_generationCageDialog->check_resolution, SIGNAL(toggled(bool)), this, SLOT(resolutionToggledFromDialog(bool)));
-    connect(m_generationCageDialog->spin_resolution_x, SIGNAL(editingFinished()), this, SLOT(resolutionModifiedFromDialog()));
-    connect(m_generationCageDialog->spin_resolution_y, SIGNAL(editingFinished()), this, SLOT(resolutionModifiedFromDialog()));
-    connect(m_generationCageDialog->spin_resolution_z, SIGNAL(editingFinished()), this, SLOT(resolutionModifiedFromDialog()));
+    connect(m_generationCageDialog->spin_resolution_x, SIGNAL(valueChanged(int)), this, SLOT(resolutionXModifiedFromDialog(int)));
+    connect(m_generationCageDialog->spin_resolution_y, SIGNAL(valueChanged(int)), this, SLOT(resolutionYModifiedFromDialog(int)));
+    connect(m_generationCageDialog->spin_resolution_z, SIGNAL(valueChanged(int)), this, SLOT(resolutionZModifiedFromDialog(int)));
     connect(m_generationCageDialog->radio_extractionFaces, SIGNAL(toggled(bool)), this, SLOT(surfaceExtractionToggledFromDialog(bool)));
 
     connect(m_schnapps, SIGNAL(mapAdded(MapHandlerGen*)), this, SLOT(mapAdded(MapHandlerGen*)));
@@ -177,20 +177,42 @@ void Surface_GenerationCage_Plugin::resolutionToggledFromDialog(bool b) {
         MapCageParameters& p = h_parameterSet[currentItems[0]->text()+m_generationCageDialog->combo_positionAttribute->currentText()];
         if(p.m_initialized) {
             p.m_independant = b;
+            p.m_toVoxellise = true;
+            updateResolutions(currentItems[0]->text(),m_generationCageDialog->combo_positionAttribute->currentText());
             m_generationCageDialog->updateAppearanceFromPlugin(p.m_independant, p.m_resolutions[0]!=0);
         }
     }
 }
 
-void Surface_GenerationCage_Plugin::resolutionModifiedFromDialog() {
+void Surface_GenerationCage_Plugin::resolutionXModifiedFromDialog(int value) {
     QList<QListWidgetItem*> currentItems = m_generationCageDialog->list_maps->selectedItems();
     if(!currentItems.empty()) {
         MapCageParameters& p = h_parameterSet[currentItems[0]->text()+m_generationCageDialog->combo_positionAttribute->currentText()];
         if(p.m_initialized) {
-            p.m_toVoxellise = true;
-            p.m_resolutions[0] = m_generationCageDialog->spin_resolution_x->text().toInt();
-            p.m_resolutions[1] = m_generationCageDialog->spin_resolution_y->text().toInt();
-            p.m_resolutions[2] = m_generationCageDialog->spin_resolution_z->text().toInt();
+            p.m_resolutions[0] = value;
+            updateResolutions(currentItems[0]->text(),m_generationCageDialog->combo_positionAttribute->currentText());
+        }
+    }
+}
+
+void Surface_GenerationCage_Plugin::resolutionYModifiedFromDialog(int value) {
+    QList<QListWidgetItem*> currentItems = m_generationCageDialog->list_maps->selectedItems();
+    if(!currentItems.empty()) {
+        MapCageParameters& p = h_parameterSet[currentItems[0]->text()+m_generationCageDialog->combo_positionAttribute->currentText()];
+        if(p.m_initialized && p.m_independant) {
+            p.m_resolutions[1] = value;
+            updateResolutions(currentItems[0]->text(),m_generationCageDialog->combo_positionAttribute->currentText());
+        }
+    }
+}
+
+void Surface_GenerationCage_Plugin::resolutionZModifiedFromDialog(int value) {
+    QList<QListWidgetItem*> currentItems = m_generationCageDialog->list_maps->selectedItems();
+    if(!currentItems.empty()) {
+        MapCageParameters& p = h_parameterSet[currentItems[0]->text()+m_generationCageDialog->combo_positionAttribute->currentText()];
+        if(p.m_initialized && p.m_independant) {
+            p.m_resolutions[2] = value;
+            updateResolutions(currentItems[0]->text(),m_generationCageDialog->combo_positionAttribute->currentText());
         }
     }
 }
@@ -380,7 +402,7 @@ void Surface_GenerationCage_Plugin::updateResolutions(const QString& mapName, co
     MapCageParameters& p = h_parameterSet[mapName+positionAttributeName];
 
     if(p.m_initialized) {
-        if(p.m_independant) {
+        if(!p.m_independant) {
             //Si les coordonnées sont calculées de façon indépendante
             Geom::Vec3f bb_min = p.m_bb.min();
             Geom::Vec3f bb_max = p.m_bb.max();

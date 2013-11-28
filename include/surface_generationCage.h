@@ -71,10 +71,13 @@ private slots:
 
     void resolutionToggledFromDialog(bool b);
 
-    void resolutionModifiedFromDialog();
+    void resolutionXModifiedFromDialog(int value);
+    void resolutionYModifiedFromDialog(int value);
+    void resolutionZModifiedFromDialog(int value);
 
     void surfaceExtractionToggledFromDialog(bool b);
 
+public slots:
     void generationCage(const QString& mapName, const QString& positionAttributeName);
     void dilaterVoxellisation(const QString& mapName, const QString& positionAttributeName);
     void reinitialiserVoxellisation(const QString& mapName, const QString& positionAttributeName);
