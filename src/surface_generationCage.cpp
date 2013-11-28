@@ -22,13 +22,20 @@ MapCageParameters::MapCageParameters() :
 
 MapCageParameters::~MapCageParameters() {}
 
-void MapCageParameters::start(const QString& mapName, const QString& positionAttributeName) {
+void MapCageParameters::start(PFP2::MAP* map, const QString& positionAttributeName) {
     if(!m_initialized) {
         m_initialized = true;
+        VertexAttribute<PFP2::VEC3> position = map->getAttribute<PFP2::VEC3, VERTEX>(positionAttributeName.toStdString());
+
+        m_bb = Algo::Geometry::computeBoundingBox<PFP2>(*map, position);
+        if(!position.isValid()) {
+            CGoGNout << "L'attribut de position choisi pour la carte sélectionnée n'est pas valide." << CGoGNendl;
+            return;
+        }
     }
 }
 
-void MapCageParameters::stop(const QString& mapName, const QString& positionAttributeName) {
+void MapCageParameters::stop() {
     if(m_initialized) {
         m_initialized = false;
     }
@@ -101,6 +108,8 @@ void Surface_GenerationCage_Plugin::attributeModified(unsigned int orbit, QStrin
 
 void Surface_GenerationCage_Plugin::openGenerationCageDialog()
 {
+    if(m_generationCageDialog->list_maps->currentRow()==-1)
+        m_generationCageDialog->updateAppearanceFromPlugin(true, false);
     m_generationCageDialog->show();
 }
 
@@ -153,6 +162,9 @@ void Surface_GenerationCage_Plugin::currentMapSelectedChangedFromDialog() {
         else {
             m_generationCageDialog->updateAppearanceFromPlugin(p.m_independant, false);
         }
+    }
+    else {
+        m_generationCageDialog->updateAppearanceFromPlugin(true, false);
     }
 }
 
@@ -228,18 +240,12 @@ void Surface_GenerationCage_Plugin::surfaceExtractionToggledFromDialog(bool b){
 void Surface_GenerationCage_Plugin::generationCage(const QString& mapName, const QString& positionAttributeName) {
     MapCageParameters& p = h_parameterSet[mapName+positionAttributeName];
 
-    p.start(mapName, positionAttributeName);
-
     if(p.m_toVoxellise) {
-        MapHandler<PFP2>* mh = static_cast<MapHandler<PFP2>*>(m_schnapps->getMap(mapName));
-        PFP2::MAP* selectedMap = mh->getMap();
-        VertexAttribute<PFP2::VEC3> position = selectedMap->getAttribute<PFP2::VEC3, VERTEX>(positionAttributeName.toStdString());
-        if(!position.isValid()) {
-            CGoGNout << "L'attribut de position choisi pour la carte sélectionnée n'est pas valide." << CGoGNendl;
-            return;
+        if(!p.m_initialized) {
+            MapHandler<PFP2>* mh = static_cast<MapHandler<PFP2>*>(m_schnapps->getMap(mapName));
+            PFP2::MAP* selectedMap = mh->getMap();
+            p.start(selectedMap, positionAttributeName);
         }
-
-        p.m_bb = Algo::Geometry::computeBoundingBox<PFP2>(*selectedMap, position);
 
         if(p.m_toCalculateResolutions) {
             calculateResolutions(mapName, positionAttributeName);
@@ -333,7 +339,7 @@ void Surface_GenerationCage_Plugin::extractionCarte(const QString& mapName, cons
             //Si l'algorithme choisi est celui du marching cube
             Algo::Surface::MC::Image<int>* image = p.m_voxellisation.getImage();   //On récupère l'image correspondant à la voxellisation
             Algo::Surface::MC::WindowingEqual<int> windowing;
-            windowing.setIsoValue(2); //L'intérieur est représenté avec une valeur de '2'
+            windowing.setIsoValue(1); //L'intérieur est représenté avec une valeur de '2'
             Algo::Surface::MC::MarchingCube<int, Algo::Surface::MC::WindowingEqual,PFP2> marching_cube(image, mapCage, positionCage, windowing, false);
             marching_cube.simpleMeshing();
             marching_cube.recalPoints(p.m_bb.min()-Geom::Vec3f(image->getVoxSizeX(), image->getVoxSizeY(), image->getVoxSizeZ()));

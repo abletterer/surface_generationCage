@@ -25,8 +25,8 @@ struct MapCageParameters
     MapCageParameters();
     ~MapCageParameters();
 
-    void start(const QString& mapName, const QString& positionAttributeName);
-    void stop(const QString& mapName, const QString& positionAttributeName);
+    void start(PFP2::MAP* map, const QString& positionAttributeName);
+    void stop();
 
     bool m_initialized;
 

@@ -37,8 +37,8 @@ public:
       * Fonction qui met  jour l'apparence de l'interface en fonction de la configuration de chaque carte
       */
     void updateAppearanceFromPlugin(bool independant, bool initialized) {
-        group_resolution->setEnabled(true);
-        group_generate->setEnabled(true);
+        group_resolution->setEnabled(initialized);
+        group_generate->setEnabled(initialized || list_maps->currentRow()!=-1);
         group_dilate->setEnabled(initialized);
         check_resolution->setChecked(independant);
         spin_resolution_y->setEnabled(independant);
