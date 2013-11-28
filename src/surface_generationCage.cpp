@@ -10,9 +10,9 @@ namespace SCHNApps
 
 MapCageParameters::MapCageParameters() :
     m_initialized(false),
-    m_voxellisation(NULL),
+    m_voxellisation(),
     m_resolutions(),
-    m_bb(NULL),
+    m_bb(),
     m_dilatation(0),
     m_toVoxellise(true),
     m_independant(true),
@@ -22,16 +22,9 @@ MapCageParameters::MapCageParameters() :
 
 MapCageParameters::~MapCageParameters() {}
 
-void MapCageParameters::start(PFP2::MAP* map, const QString& positionAttributeName) {
+void MapCageParameters::start() {
     if(!m_initialized) {
         m_initialized = true;
-        VertexAttribute<PFP2::VEC3> position = map->getAttribute<PFP2::VEC3, VERTEX>(positionAttributeName.toStdString());
-
-        m_bb = Algo::Geometry::computeBoundingBox<PFP2>(*map, position);
-        if(!position.isValid()) {
-            CGoGNout << "L'attribut de position choisi pour la carte sélectionnée n'est pas valide." << CGoGNendl;
-            return;
-        }
     }
 }
 
@@ -202,7 +195,7 @@ void Surface_GenerationCage_Plugin::resolutionXModifiedFromDialog(int value) {
         MapCageParameters& p = h_parameterSet[currentItems[0]->text()+m_generationCageDialog->combo_positionAttribute->currentText()];
         if(p.m_initialized) {
             p.m_resolutions[0] = value;
-            updateResolutions(currentItems[0]->text(),m_generationCageDialog->combo_positionAttribute->currentText());
+            p.m_toVoxellise = true;
         }
     }
 }
@@ -213,7 +206,7 @@ void Surface_GenerationCage_Plugin::resolutionYModifiedFromDialog(int value) {
         MapCageParameters& p = h_parameterSet[currentItems[0]->text()+m_generationCageDialog->combo_positionAttribute->currentText()];
         if(p.m_initialized && p.m_independant) {
             p.m_resolutions[1] = value;
-            updateResolutions(currentItems[0]->text(),m_generationCageDialog->combo_positionAttribute->currentText());
+            p.m_toVoxellise = true;
         }
     }
 }
@@ -224,7 +217,7 @@ void Surface_GenerationCage_Plugin::resolutionZModifiedFromDialog(int value) {
         MapCageParameters& p = h_parameterSet[currentItems[0]->text()+m_generationCageDialog->combo_positionAttribute->currentText()];
         if(p.m_initialized && p.m_independant) {
             p.m_resolutions[2] = value;
-            updateResolutions(currentItems[0]->text(),m_generationCageDialog->combo_positionAttribute->currentText());
+            p.m_toVoxellise = true;
         }
     }
 }
@@ -240,11 +233,19 @@ void Surface_GenerationCage_Plugin::surfaceExtractionToggledFromDialog(bool b){
 void Surface_GenerationCage_Plugin::generationCage(const QString& mapName, const QString& positionAttributeName) {
     MapCageParameters& p = h_parameterSet[mapName+positionAttributeName];
 
+    if(!p.m_initialized) {
+        p.start();
+    }
     if(p.m_toVoxellise) {
-        if(!p.m_initialized) {
-            MapHandler<PFP2>* mh = static_cast<MapHandler<PFP2>*>(m_schnapps->getMap(mapName));
-            PFP2::MAP* selectedMap = mh->getMap();
-            p.start(selectedMap, positionAttributeName);
+        MapHandler<PFP2>* mh = static_cast<MapHandler<PFP2>*>(m_schnapps->getMap(mapName));
+        PFP2::MAP* selectedMap = mh->getMap();
+        VertexAttribute<PFP2::VEC3> position = selectedMap->getAttribute<PFP2::VEC3, VERTEX>(positionAttributeName.toStdString());
+
+        p.m_bb = Algo::Geometry::computeBoundingBox<PFP2>(*selectedMap, position);
+
+        if(!position.isValid()) {
+            CGoGNout << "L'attribut de position choisi pour la carte sélectionnée n'est pas valide." << CGoGNendl;
+            return;
         }
 
         if(p.m_toCalculateResolutions) {
@@ -259,6 +260,51 @@ void Surface_GenerationCage_Plugin::generationCage(const QString& mapName, const
 
     extractionCarte(mapName, positionAttributeName);
     m_generationCageDialog->updateResolutionsFromPlugin(p.m_resolutions);
+}
+
+void Surface_GenerationCage_Plugin::voxellise(const QString& mapName, const QString& positionAttributeName) {
+    MapCageParameters& p = h_parameterSet[mapName+positionAttributeName];
+
+    if(p.m_initialized) {
+        Utils::Chrono chrono;
+        chrono.start();
+        MapHandler<PFP2>* mh = static_cast<MapHandler<PFP2>*>(m_schnapps->getMap(mapName));
+        PFP2::MAP* selectedMap = mh->getMap();
+
+        VertexAttribute<PFP2::VEC3> position = selectedMap->getAttribute<PFP2::VEC3, VERTEX>(positionAttributeName.toStdString());
+        if(!position.isValid()) {
+            CGoGNout << "L'attribut de position choisi pour la carte sélectionnée n'est pas valide." << CGoGNendl;
+            return;
+        }
+
+        VertexAttribute<Voxel> voxel = selectedMap->getAttribute<Voxel, VERTEX>("voxel");
+        if(!voxel.isValid()) {
+            voxel = selectedMap->addAttribute<Voxel, VERTEX>("voxel");
+        }
+
+        p.m_voxellisation = Algo::Surface::Modelisation::Voxellisation(p.m_resolutions, p.m_bb);
+
+        TraversorF<PFP2::MAP> trav_face_map(*selectedMap);
+        std::vector<Geom::Vec3i> polygone = std::vector<Geom::Vec3i>();
+
+        for(Dart d = trav_face_map.begin(); d!=trav_face_map.end(); d=trav_face_map.next()) {
+            //On traverse l'ensemble des faces de la carte
+            Traversor2FV<PFP2::MAP> trav_face_vert(*selectedMap,d);
+            polygone.clear();
+            for(Dart e = trav_face_vert.begin(); e!=trav_face_vert.end(); e=trav_face_vert.next()) {
+                //On récupère les sommets composants la face courante
+                if(!voxel[e].isInitialise())
+                    voxel[e].setIndexes(getVoxelIndex(mapName, positionAttributeName, position[e]));
+                polygone.push_back(voxel[e].getIndexes());
+            }
+            p.m_voxellisation.voxellisePolygone(polygone);
+        }
+
+        p.m_toVoxellise = false;
+        m_generationCageDialog->updateAppearanceFromPlugin(p.m_independant, p.m_resolutions[0]!=0);
+
+        CGoGNout << "Temps de voxellisation : " << chrono.elapsed() << " ms" << CGoGNendl;
+    }
 }
 
 void Surface_GenerationCage_Plugin::dilaterVoxellisation(const QString& mapName, const QString& positionAttributeName) {
@@ -280,8 +326,8 @@ void Surface_GenerationCage_Plugin::dilaterVoxellisation(const QString& mapName,
         chrono.start();
         p.m_voxellisation.dilate();
         CGoGNout << "Temps de dilatation : " << chrono.elapsed() << " ms." << CGoGNendl;
-        extractionCarte(mapName, positionAttributeName);
         m_generationCageDialog->updateNiveauDilatationFromPlugin(++p.m_dilatation);
+        extractionCarte(mapName, positionAttributeName);
     }
 }
 
@@ -290,6 +336,7 @@ void Surface_GenerationCage_Plugin::reinitialiserVoxellisation(const QString& ma
 
     if(p.m_initialized) {
         p.m_toVoxellise = true;
+        p.m_dilatation = 0;
         generationCage(mapName, positionAttributeName);
         m_generationCageDialog->updateNiveauDilatationFromPlugin(p.m_dilatation);
     }
@@ -342,7 +389,7 @@ void Surface_GenerationCage_Plugin::extractionCarte(const QString& mapName, cons
             windowing.setIsoValue(1); //L'intérieur est représenté avec une valeur de '2'
             Algo::Surface::MC::MarchingCube<int, Algo::Surface::MC::WindowingEqual,PFP2> marching_cube(image, mapCage, positionCage, windowing, false);
             marching_cube.simpleMeshing();
-            marching_cube.recalPoints(p.m_bb.min()-Geom::Vec3f(image->getVoxSizeX(), image->getVoxSizeY(), image->getVoxSizeZ()));
+            marching_cube.recalPoints(p.m_bb.min()-Geom::Vec3f(image->getVoxSizeX()*(p.m_dilatation+1), image->getVoxSizeY()*(p.m_dilatation+1), image->getVoxSizeZ()*(p.m_dilatation+1)));
 
             CGoGNout << "Temps de réalisation du Marching Cube : " << chrono.elapsed() << " ms." << CGoGNendl;
 
@@ -450,51 +497,6 @@ void Surface_GenerationCage_Plugin::updateResolutions(const QString& mapName, co
 
         p.m_toVoxellise = true;
         p.m_toCalculateResolutions = false;
-    }
-}
-
-void Surface_GenerationCage_Plugin::voxellise(const QString& mapName, const QString& positionAttributeName) {
-    MapCageParameters& p = h_parameterSet[mapName+positionAttributeName];
-
-    if(p.m_initialized) {
-        Utils::Chrono chrono;
-        chrono.start();
-        MapHandler<PFP2>* mh = static_cast<MapHandler<PFP2>*>(m_schnapps->getMap(mapName));
-        PFP2::MAP* selectedMap = mh->getMap();
-
-        VertexAttribute<PFP2::VEC3> position = selectedMap->getAttribute<PFP2::VEC3, VERTEX>(positionAttributeName.toStdString());
-        if(!position.isValid()) {
-            CGoGNout << "L'attribut de position choisi pour la carte sélectionnée n'est pas valide." << CGoGNendl;
-            return;
-        }
-
-        VertexAttribute<Voxel> voxel = selectedMap->getAttribute<Voxel, VERTEX>("voxel");
-        if(!voxel.isValid()) {
-            voxel = selectedMap->addAttribute<Voxel, VERTEX>("voxel");
-        }
-
-        p.m_voxellisation = Algo::Surface::Modelisation::Voxellisation(p.m_resolutions, p.m_bb);
-
-        TraversorF<PFP2::MAP> trav_face_map(*selectedMap);
-        std::vector<Geom::Vec3i> polygone = std::vector<Geom::Vec3i>();
-
-        for(Dart d = trav_face_map.begin(); d!=trav_face_map.end(); d=trav_face_map.next()) {
-            //On traverse l'ensemble des faces de la carte
-            Traversor2FV<PFP2::MAP> trav_face_vert(*selectedMap,d);
-            polygone.clear();
-            for(Dart e = trav_face_vert.begin(); e!=trav_face_vert.end(); e=trav_face_vert.next()) {
-                //On récupère les sommets composants la face courante
-                if(!voxel[e].isInitialise())
-                    voxel[e].setIndexes(getVoxelIndex(mapName, positionAttributeName, position[e]));
-                polygone.push_back(voxel[e].getIndexes());
-            }
-            p.m_voxellisation.voxellisePolygone(polygone);
-        }
-
-        p.m_toVoxellise = false;
-        m_generationCageDialog->updateAppearanceFromPlugin(p.m_independant, p.m_resolutions[0]!=0);
-
-        CGoGNout << "Temps de voxellisation : " << chrono.elapsed() << " ms" << CGoGNendl;
     }
 }
 

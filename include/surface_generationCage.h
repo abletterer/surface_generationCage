@@ -25,7 +25,7 @@ struct MapCageParameters
     MapCageParameters();
     ~MapCageParameters();
 
-    void start(PFP2::MAP* map, const QString& positionAttributeName);
+    void start();
     void stop();
 
     bool m_initialized;
@@ -79,15 +79,16 @@ private slots:
 
 public slots:
     void generationCage(const QString& mapName, const QString& positionAttributeName);
+
+    void voxellise(const QString& mapName, const QString &positionAttributeName);
+
     void dilaterVoxellisation(const QString& mapName, const QString& positionAttributeName);
     void reinitialiserVoxellisation(const QString& mapName, const QString& positionAttributeName);
 
-    void calculateResolutions(const QString& mapName, const QString& positionAttributeName);
-    void updateResolutions(const QString& mapName, const QString& positionAttributeName);
-
     void extractionCarte(const QString& mapName, const QString& positionAttributeName);
 
-    void voxellise(const QString& mapName, const QString &positionAttributeName);
+    void calculateResolutions(const QString& mapName, const QString& positionAttributeName);
+    void updateResolutions(const QString& mapName, const QString& positionAttributeName);
 
     Geom::Vec3i& getVoxelIndex(const QString& mapName, const QString& positionAttributeName, Geom::Vec3f a);
 private:
