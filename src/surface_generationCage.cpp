@@ -195,6 +195,9 @@ void Surface_GenerationCage_Plugin::resolutionXModifiedFromDialog(int value) {
         MapCageParameters& p = h_parameterSet[currentItems[0]->text()+m_generationCageDialog->combo_positionAttribute->currentText()];
         if(p.m_initialized) {
             p.m_resolutions[0] = value;
+            if(!p.m_independant) {
+                updateResolutions(currentItems[0]->text(), m_generationCageDialog->combo_positionAttribute->currentText());
+            }
             p.m_toVoxellise = true;
         }
     }
@@ -235,18 +238,17 @@ void Surface_GenerationCage_Plugin::generationCage(const QString& mapName, const
 
     if(!p.m_initialized) {
         p.start();
-    }
-    if(p.m_toVoxellise) {
         MapHandler<PFP2>* mh = static_cast<MapHandler<PFP2>*>(m_schnapps->getMap(mapName));
         PFP2::MAP* selectedMap = mh->getMap();
         VertexAttribute<PFP2::VEC3> position = selectedMap->getAttribute<PFP2::VEC3, VERTEX>(positionAttributeName.toStdString());
-
-        p.m_bb = Algo::Geometry::computeBoundingBox<PFP2>(*selectedMap, position);
-
         if(!position.isValid()) {
             CGoGNout << "L'attribut de position choisi pour la carte sélectionnée n'est pas valide." << CGoGNendl;
             return;
         }
+        p.m_bb = Algo::Geometry::computeBoundingBox<PFP2>(*selectedMap, position);
+    }
+
+    if(p.m_toVoxellise) {
 
         if(p.m_toCalculateResolutions) {
             calculateResolutions(mapName, positionAttributeName);
@@ -259,7 +261,6 @@ void Surface_GenerationCage_Plugin::generationCage(const QString& mapName, const
     }
 
     extractionCarte(mapName, positionAttributeName);
-    m_generationCageDialog->updateResolutionsFromPlugin(p.m_resolutions);
 }
 
 void Surface_GenerationCage_Plugin::voxellise(const QString& mapName, const QString& positionAttributeName) {
@@ -279,6 +280,10 @@ void Surface_GenerationCage_Plugin::voxellise(const QString& mapName, const QStr
 
         VertexAttribute<Voxel> voxel = selectedMap->getAttribute<Voxel, VERTEX>("voxel");
         if(!voxel.isValid()) {
+            voxel = selectedMap->addAttribute<Voxel, VERTEX>("voxel");
+        }
+        else {
+            selectedMap->removeAttribute<Voxel, VERTEX>(voxel);
             voxel = selectedMap->addAttribute<Voxel, VERTEX>("voxel");
         }
 
@@ -375,9 +380,6 @@ void Surface_GenerationCage_Plugin::extractionCarte(const QString& mapName, cons
                 return;
             }
 
-            Algo::Surface::Modelisation::EarTriangulation<PFP2> triang =  Algo::Surface::Modelisation::EarTriangulation<PFP2>(*mapCage);
-            triang.triangule();
-
             CGoGNout << "Temps d'extraction des faces : " << chrono.elapsed() << " ms." << CGoGNendl;
 
             positionCage = mapCage->getAttribute<PFP2::VEC3, VERTEX>(attrNamesCage[0]);
@@ -386,12 +388,12 @@ void Surface_GenerationCage_Plugin::extractionCarte(const QString& mapName, cons
             //Si l'algorithme choisi est celui du marching cube
             Algo::Surface::MC::Image<int>* image = p.m_voxellisation.getImage();   //On récupère l'image correspondant à la voxellisation
             Algo::Surface::MC::WindowingEqual<int> windowing;
-            windowing.setIsoValue(1); //L'intérieur est représenté avec une valeur de '2'
+            windowing.setIsoValue(1); //L'intérieur est représenté avec une valeur de '1'
             Algo::Surface::MC::MarchingCube<int, Algo::Surface::MC::WindowingEqual,PFP2> marching_cube(image, mapCage, positionCage, windowing, false);
             marching_cube.simpleMeshing();
             marching_cube.recalPoints(p.m_bb.min()-Geom::Vec3f(image->getVoxSizeX()*(p.m_dilatation+1), image->getVoxSizeY()*(p.m_dilatation+1), image->getVoxSizeZ()*(p.m_dilatation+1)));
 
-            CGoGNout << "Temps de réalisation du Marching Cube : " << chrono.elapsed() << " ms." << CGoGNendl;
+//            CGoGNout << "Temps de réalisation du Marching Cube : " << chrono.elapsed() << " ms." << CGoGNendl;
 
             delete image;
             positionCage = mapCage->getAttribute<PFP2::VEC3, VERTEX>("position");
