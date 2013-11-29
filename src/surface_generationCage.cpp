@@ -233,8 +233,12 @@ void Surface_GenerationCage_Plugin::surfaceExtractionToggledFromDialog(bool b){
     }
 }
 
-void Surface_GenerationCage_Plugin::generationCage(const QString& mapName, const QString& positionAttributeName) {
+/*
+  * Fonction qui génère une cage par rapport à un certain maillage
+  */
+MapHandlerGen* Surface_GenerationCage_Plugin::generationCage(const QString& mapName, const QString& positionAttributeName) {
     MapCageParameters& p = h_parameterSet[mapName+positionAttributeName];
+    MapHandlerGen* cageHandler;
 
     if(!p.m_initialized) {
         p.start();
@@ -243,7 +247,7 @@ void Surface_GenerationCage_Plugin::generationCage(const QString& mapName, const
         VertexAttribute<PFP2::VEC3> position = selectedMap->getAttribute<PFP2::VEC3, VERTEX>(positionAttributeName.toStdString());
         if(!position.isValid()) {
             CGoGNout << "L'attribut de position choisi pour la carte sélectionnée n'est pas valide." << CGoGNendl;
-            return;
+            return NULL;
         }
         p.m_bb = Algo::Geometry::computeBoundingBox<PFP2>(*selectedMap, position);
     }
@@ -260,7 +264,8 @@ void Surface_GenerationCage_Plugin::generationCage(const QString& mapName, const
         p.m_dilatation = 0;
     }
 
-    extractionCarte(mapName, positionAttributeName);
+    cageHandler = extractionCarte(mapName, positionAttributeName);
+    return cageHandler;
 }
 
 void Surface_GenerationCage_Plugin::voxellise(const QString& mapName, const QString& positionAttributeName) {
@@ -347,16 +352,20 @@ void Surface_GenerationCage_Plugin::reinitialiserVoxellisation(const QString& ma
     }
 }
 
-void Surface_GenerationCage_Plugin::extractionCarte(const QString& mapName, const QString& positionAttributeName) {
+MapHandlerGen* Surface_GenerationCage_Plugin::extractionCarte(const QString& mapName, const QString& positionAttributeName) {
     MapCageParameters& p = h_parameterSet[mapName+positionAttributeName];
+    MapHandlerGen* cageHandler;
 
     if(p.m_initialized) {
-        MapHandler<PFP2>* mh = static_cast<MapHandler<PFP2>*>(m_schnapps->getMap(mapName+QString("Cage")));
 
-        if(mh==NULL) {
+        cageHandler = m_schnapps->getMap(mapName+QString("Cage"));
+
+        if(cageHandler==NULL) {
             //Si la carte représentant la cage de ce maillage n'existait pas encore
-            mh = static_cast<MapHandler<PFP2>*>(m_schnapps->addMap(mapName+QString("Cage"), 2));
+            cageHandler = m_schnapps->addMap(mapName+QString("Cage"), 2);
         }
+
+        MapHandler<PFP2>* mh = static_cast<MapHandler<PFP2>*>(cageHandler);
 
         PFP2::MAP* mapCage = mh->getMap();
         mapCage->clear(true);
@@ -377,7 +386,7 @@ void Surface_GenerationCage_Plugin::extractionCarte(const QString& mapName, cons
             if(!Algo::Surface::Import::importVoxellisation<PFP2>(*mapCage, p.m_voxellisation, attrNamesCage, true))
             {
                 CGoGNerr << "Impossible d'importer la voxellisation" << CGoGNendl ;
-                return;
+                return NULL;
             }
 
             CGoGNout << "Temps d'extraction des faces : " << chrono.elapsed() << " ms." << CGoGNendl;
@@ -405,6 +414,7 @@ void Surface_GenerationCage_Plugin::extractionCarte(const QString& mapName, cons
 
         mh->notifyConnectivityModification();
     }
+    return cageHandler;
 }
 
 void Surface_GenerationCage_Plugin::calculateResolutions(const QString& mapName, const QString& positionAttributeName) {

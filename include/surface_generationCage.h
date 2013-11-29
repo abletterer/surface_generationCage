@@ -78,14 +78,14 @@ private slots:
     void surfaceExtractionToggledFromDialog(bool b);
 
 public slots:
-    void generationCage(const QString& mapName, const QString& positionAttributeName);
+    MapHandlerGen* generationCage(const QString& mapName, const QString& positionAttributeName);
 
     void voxellise(const QString& mapName, const QString &positionAttributeName);
 
     void dilaterVoxellisation(const QString& mapName, const QString& positionAttributeName);
     void reinitialiserVoxellisation(const QString& mapName, const QString& positionAttributeName);
 
-    void extractionCarte(const QString& mapName, const QString& positionAttributeName);
+    MapHandlerGen* extractionCarte(const QString& mapName, const QString& positionAttributeName);
 
     void calculateResolutions(const QString& mapName, const QString& positionAttributeName);
     void updateResolutions(const QString& mapName, const QString& positionAttributeName);
