@@ -8,7 +8,7 @@ namespace CGoGN
 namespace SCHNApps
 {
 
-MapCageParameters::MapCageParameters() :
+MapParameters::MapParameters() :
     m_initialized(false),
     m_voxellisation(),
     m_resolutions(),
@@ -20,15 +20,17 @@ MapCageParameters::MapCageParameters() :
     m_toCalculateResolutions(true)
 {}
 
-MapCageParameters::~MapCageParameters() {}
+MapParameters::~MapParameters() {}
 
-void MapCageParameters::start() {
+void MapParameters::start()
+{
     if(!m_initialized) {
         m_initialized = true;
     }
 }
 
-void MapCageParameters::stop() {
+void MapParameters::stop()
+{
     if(m_initialized) {
         m_initialized = false;
     }
@@ -119,7 +121,8 @@ void Surface_GenerationCage_Plugin::generationCageFromDialog()
     }
 }
 
-void Surface_GenerationCage_Plugin::dilaterVoxellisationFromDialog() {
+void Surface_GenerationCage_Plugin::dilaterVoxellisationFromDialog()
+{
     QList<QListWidgetItem*> currentItems = m_generationCageDialog->list_maps->selectedItems();
     if(!currentItems.empty())
     {
@@ -143,16 +146,19 @@ void Surface_GenerationCage_Plugin::reinitialiserVoxellisationFromDialog() {
     }
 }
 
-void Surface_GenerationCage_Plugin::currentMapSelectedChangedFromDialog() {
+void Surface_GenerationCage_Plugin::currentMapSelectedChangedFromDialog()
+{
     QList<QListWidgetItem*> currentItems = m_generationCageDialog->list_maps->selectedItems();
-    if(!currentItems.empty() && m_generationCageDialog->combo_positionAttribute->currentIndex()!=-1) {
-        MapCageParameters& p = h_parameterSet[currentItems[0]->text()+m_generationCageDialog->combo_positionAttribute->currentText()];
+    if(!currentItems.empty() && m_generationCageDialog->combo_positionAttribute->currentIndex()!=-1)
+    {
+        MapParameters& p = h_parameterSet[currentItems[0]->text()+m_generationCageDialog->combo_positionAttribute->currentText()];
         if(p.m_initialized) {
             m_generationCageDialog->updateAppearanceFromPlugin(p.m_independant, p.m_resolutions[0]!=0);
             m_generationCageDialog->updateResolutionsFromPlugin(p.m_resolutions);
             m_generationCageDialog->updateNiveauDilatationFromPlugin(p.m_dilatation);
         }
-        else {
+        else
+        {
             m_generationCageDialog->updateAppearanceFromPlugin(p.m_independant, false);
         }
     }
@@ -161,26 +167,31 @@ void Surface_GenerationCage_Plugin::currentMapSelectedChangedFromDialog() {
     }
 }
 
-void Surface_GenerationCage_Plugin::currentAttributeIndexChangedFromDialog(QString nameAttr) {
+void Surface_GenerationCage_Plugin::currentAttributeIndexChangedFromDialog(QString nameAttr)
+{
     QList<QListWidgetItem*> currentItems = m_generationCageDialog->list_maps->selectedItems();
     if(!currentItems.empty() && m_generationCageDialog->combo_positionAttribute->currentIndex()!=-1) {
-        MapCageParameters& p = h_parameterSet[currentItems[0]->text()+nameAttr];
-        if(p.m_initialized) {
+        MapParameters& p = h_parameterSet[currentItems[0]->text()+nameAttr];
+        if(p.m_initialized)
+        {
             m_generationCageDialog->updateAppearanceFromPlugin(p.m_independant, p.m_resolutions[0]!=0);
             m_generationCageDialog->updateResolutionsFromPlugin(p.m_resolutions);
             m_generationCageDialog->updateNiveauDilatationFromPlugin(p.m_dilatation);
         }
-        else {
+        else
+        {
             m_generationCageDialog->updateAppearanceFromPlugin(p.m_independant, false);
         }
     }
 }
 
-void Surface_GenerationCage_Plugin::resolutionToggledFromDialog(bool b) {
+void Surface_GenerationCage_Plugin::resolutionToggledFromDialog(bool b)
+{
     QList<QListWidgetItem*> currentItems = m_generationCageDialog->list_maps->selectedItems();
     if(!currentItems.empty() && m_generationCageDialog->combo_positionAttribute->currentIndex()!=-1) {
-        MapCageParameters& p = h_parameterSet[currentItems[0]->text()+m_generationCageDialog->combo_positionAttribute->currentText()];
-        if(p.m_initialized) {
+        MapParameters& p = h_parameterSet[currentItems[0]->text()+m_generationCageDialog->combo_positionAttribute->currentText()];
+        if(p.m_initialized)
+        {
             p.m_independant = b;
             p.m_toVoxellise = true;
             updateResolutions(currentItems[0]->text(),m_generationCageDialog->combo_positionAttribute->currentText());
@@ -189,11 +200,14 @@ void Surface_GenerationCage_Plugin::resolutionToggledFromDialog(bool b) {
     }
 }
 
-void Surface_GenerationCage_Plugin::resolutionXModifiedFromDialog(int value) {
+void Surface_GenerationCage_Plugin::resolutionXModifiedFromDialog(int value)
+{
     QList<QListWidgetItem*> currentItems = m_generationCageDialog->list_maps->selectedItems();
-    if(!currentItems.empty()) {
-        MapCageParameters& p = h_parameterSet[currentItems[0]->text()+m_generationCageDialog->combo_positionAttribute->currentText()];
-        if(p.m_initialized) {
+    if(!currentItems.empty())
+    {
+        MapParameters& p = h_parameterSet[currentItems[0]->text()+m_generationCageDialog->combo_positionAttribute->currentText()];
+        if(p.m_initialized)
+        {
             p.m_resolutions[0] = value;
             if(!p.m_independant) {
                 updateResolutions(currentItems[0]->text(), m_generationCageDialog->combo_positionAttribute->currentText());
@@ -203,32 +217,40 @@ void Surface_GenerationCage_Plugin::resolutionXModifiedFromDialog(int value) {
     }
 }
 
-void Surface_GenerationCage_Plugin::resolutionYModifiedFromDialog(int value) {
+void Surface_GenerationCage_Plugin::resolutionYModifiedFromDialog(int value)
+{
     QList<QListWidgetItem*> currentItems = m_generationCageDialog->list_maps->selectedItems();
-    if(!currentItems.empty()) {
-        MapCageParameters& p = h_parameterSet[currentItems[0]->text()+m_generationCageDialog->combo_positionAttribute->currentText()];
-        if(p.m_initialized && p.m_independant) {
+    if(!currentItems.empty())
+    {
+        MapParameters& p = h_parameterSet[currentItems[0]->text()+m_generationCageDialog->combo_positionAttribute->currentText()];
+        if(p.m_initialized && p.m_independant)
+        {
             p.m_resolutions[1] = value;
             p.m_toVoxellise = true;
         }
     }
 }
 
-void Surface_GenerationCage_Plugin::resolutionZModifiedFromDialog(int value) {
+void Surface_GenerationCage_Plugin::resolutionZModifiedFromDialog(int value)
+{
     QList<QListWidgetItem*> currentItems = m_generationCageDialog->list_maps->selectedItems();
-    if(!currentItems.empty()) {
-        MapCageParameters& p = h_parameterSet[currentItems[0]->text()+m_generationCageDialog->combo_positionAttribute->currentText()];
-        if(p.m_initialized && p.m_independant) {
+    if(!currentItems.empty())
+    {
+        MapParameters& p = h_parameterSet[currentItems[0]->text()+m_generationCageDialog->combo_positionAttribute->currentText()];
+        if(p.m_initialized && p.m_independant)
+        {
             p.m_resolutions[2] = value;
             p.m_toVoxellise = true;
         }
     }
 }
 
-void Surface_GenerationCage_Plugin::surfaceExtractionToggledFromDialog(bool b){
+void Surface_GenerationCage_Plugin::surfaceExtractionToggledFromDialog(bool b)
+{
     QList<QListWidgetItem*> currentItems = m_generationCageDialog->list_maps->selectedItems();
-    if(!currentItems.empty()) {
-        MapCageParameters& p = h_parameterSet[currentItems[0]->text()+m_generationCageDialog->combo_positionAttribute->currentText()];
+    if(!currentItems.empty())
+    {
+        MapParameters& p = h_parameterSet[currentItems[0]->text()+m_generationCageDialog->combo_positionAttribute->currentText()];
         p.m_extractionFaces = b;
     }
 }
@@ -236,25 +258,30 @@ void Surface_GenerationCage_Plugin::surfaceExtractionToggledFromDialog(bool b){
 /*
   * Fonction qui génère une cage par rapport à un certain maillage
   */
-MapHandlerGen* Surface_GenerationCage_Plugin::generationCage(const QString& mapName, const QString& positionAttributeName) {
-    MapCageParameters& p = h_parameterSet[mapName+positionAttributeName];
+MapHandlerGen* Surface_GenerationCage_Plugin::generationCage(const QString& mapName, const QString& positionAttributeName)
+{
+    MapParameters& p = h_parameterSet[mapName+positionAttributeName];
     MapHandlerGen* cageHandler;
 
-    if(!p.m_initialized) {
+    if(!p.m_initialized)
+    {
         p.start();
         MapHandler<PFP2>* mh = static_cast<MapHandler<PFP2>*>(m_schnapps->getMap(mapName));
         PFP2::MAP* selectedMap = mh->getMap();
         VertexAttribute<PFP2::VEC3> position = selectedMap->getAttribute<PFP2::VEC3, VERTEX>(positionAttributeName.toStdString());
-        if(!position.isValid()) {
+        if(!position.isValid())
+        {
             CGoGNout << "L'attribut de position choisi pour la carte sélectionnée n'est pas valide." << CGoGNendl;
             return NULL;
         }
         p.m_bb = Algo::Geometry::computeBoundingBox<PFP2>(*selectedMap, position);
     }
 
-    if(p.m_toVoxellise) {
+    if(p.m_toVoxellise)
+    {
 
-        if(p.m_toCalculateResolutions) {
+        if(p.m_toCalculateResolutions)
+        {
             calculateResolutions(mapName, positionAttributeName);
         }
 
@@ -268,26 +295,31 @@ MapHandlerGen* Surface_GenerationCage_Plugin::generationCage(const QString& mapN
     return cageHandler;
 }
 
-void Surface_GenerationCage_Plugin::voxellise(const QString& mapName, const QString& positionAttributeName) {
-    MapCageParameters& p = h_parameterSet[mapName+positionAttributeName];
+void Surface_GenerationCage_Plugin::voxellise(const QString& mapName, const QString& positionAttributeName)
+{
+    MapParameters& p = h_parameterSet[mapName+positionAttributeName];
 
-    if(p.m_initialized) {
+    if(p.m_initialized)
+    {
         Utils::Chrono chrono;
         chrono.start();
         MapHandler<PFP2>* mh = static_cast<MapHandler<PFP2>*>(m_schnapps->getMap(mapName));
         PFP2::MAP* selectedMap = mh->getMap();
 
         VertexAttribute<PFP2::VEC3> position = selectedMap->getAttribute<PFP2::VEC3, VERTEX>(positionAttributeName.toStdString());
-        if(!position.isValid()) {
+        if(!position.isValid())
+        {
             CGoGNout << "L'attribut de position choisi pour la carte sélectionnée n'est pas valide." << CGoGNendl;
             return;
         }
 
         VertexAttribute<Voxel> voxel = selectedMap->getAttribute<Voxel, VERTEX>("voxel");
-        if(!voxel.isValid()) {
+        if(!voxel.isValid())
+        {
             voxel = selectedMap->addAttribute<Voxel, VERTEX>("voxel");
         }
-        else {
+        else
+        {
             selectedMap->removeAttribute<Voxel, VERTEX>(voxel);
             voxel = selectedMap->addAttribute<Voxel, VERTEX>("voxel");
         }
@@ -297,11 +329,13 @@ void Surface_GenerationCage_Plugin::voxellise(const QString& mapName, const QStr
         TraversorF<PFP2::MAP> trav_face_map(*selectedMap);
         std::vector<Geom::Vec3i> polygone = std::vector<Geom::Vec3i>();
 
-        for(Dart d = trav_face_map.begin(); d!=trav_face_map.end(); d=trav_face_map.next()) {
+        for(Dart d = trav_face_map.begin(); d!=trav_face_map.end(); d=trav_face_map.next())
+        {
             //On traverse l'ensemble des faces de la carte
             Traversor2FV<PFP2::MAP> trav_face_vert(*selectedMap,d);
             polygone.clear();
-            for(Dart e = trav_face_vert.begin(); e!=trav_face_vert.end(); e=trav_face_vert.next()) {
+            for(Dart e = trav_face_vert.begin(); e!=trav_face_vert.end(); e=trav_face_vert.next())
+            {
                 //On récupère les sommets composants la face courante
                 if(!voxel[e].isInitialise())
                     voxel[e].setIndexes(getVoxelIndex(mapName, positionAttributeName, position[e]));
@@ -317,15 +351,19 @@ void Surface_GenerationCage_Plugin::voxellise(const QString& mapName, const QStr
     }
 }
 
-void Surface_GenerationCage_Plugin::dilaterVoxellisation(const QString& mapName, const QString& positionAttributeName) {
-    MapCageParameters& p = h_parameterSet[mapName+positionAttributeName];
+void Surface_GenerationCage_Plugin::dilaterVoxellisation(const QString& mapName, const QString& positionAttributeName)
+{
+    MapParameters& p = h_parameterSet[mapName+positionAttributeName];
 
-    if(p.m_initialized) {
-        if(p.m_toVoxellise) {
+    if(p.m_initialized)
+    {
+        if(p.m_toVoxellise)
+        {
             MapHandler<PFP2>* mh = static_cast<MapHandler<PFP2>*>(m_schnapps->getMap(mapName));
             PFP2::MAP* selectedMap = mh->getMap();
             VertexAttribute<PFP2::VEC3> position = selectedMap->getAttribute<PFP2::VEC3, VERTEX>(positionAttributeName.toStdString());
-            if(!position.isValid()) {
+            if(!position.isValid())
+            {
                 CGoGNout << "L'attribut de position choisi pour la carte sélectionnée n'est pas valide." << CGoGNendl;
                 return;
             }
@@ -341,10 +379,12 @@ void Surface_GenerationCage_Plugin::dilaterVoxellisation(const QString& mapName,
     }
 }
 
-void Surface_GenerationCage_Plugin::reinitialiserVoxellisation(const QString& mapName, const QString& positionAttributeName) {
-    MapCageParameters& p = h_parameterSet[mapName+positionAttributeName];
+void Surface_GenerationCage_Plugin::reinitialiserVoxellisation(const QString& mapName, const QString& positionAttributeName)
+{
+    MapParameters& p = h_parameterSet[mapName+positionAttributeName];
 
-    if(p.m_initialized) {
+    if(p.m_initialized)
+    {
         p.m_toVoxellise = true;
         p.m_dilatation = 0;
         generationCage(mapName, positionAttributeName);
@@ -352,15 +392,17 @@ void Surface_GenerationCage_Plugin::reinitialiserVoxellisation(const QString& ma
     }
 }
 
-MapHandlerGen* Surface_GenerationCage_Plugin::extractionCarte(const QString& mapName, const QString& positionAttributeName) {
-    MapCageParameters& p = h_parameterSet[mapName+positionAttributeName];
-    MapHandlerGen* cageHandler;
+MapHandlerGen* Surface_GenerationCage_Plugin::extractionCarte(const QString& mapName, const QString& positionAttributeName)
+{
+    MapParameters& p = h_parameterSet[mapName+positionAttributeName];
+    MapHandlerGen* cageHandler = NULL;
 
-    if(p.m_initialized) {
-
+    if(p.m_initialized)
+    {
         cageHandler = m_schnapps->getMap(mapName+QString("Cage"));
 
-        if(cageHandler==NULL) {
+        if(cageHandler==NULL)
+        {
             //Si la carte représentant la cage de ce maillage n'existait pas encore
             cageHandler = m_schnapps->addMap(mapName+QString("Cage"), 2);
         }
@@ -371,14 +413,16 @@ MapHandlerGen* Surface_GenerationCage_Plugin::extractionCarte(const QString& map
         mapCage->clear(true);
 
         VertexAttribute<PFP2::VEC3> positionCage = mapCage->getAttribute<PFP2::VEC3, VERTEX>("position");
-        if(!positionCage.isValid()) {
+        if(!positionCage.isValid())
+        {
             positionCage = mapCage->addAttribute<PFP2::VEC3, VERTEX>("position");
             mh->registerAttribute(positionCage);
         }
 
         Utils::Chrono chrono;
         chrono.start();
-        if(p.m_extractionFaces) {
+        if(p.m_extractionFaces)
+        {
             //Si l'algorithme choisi est celui de l'extraction de faces
             p.m_voxellisation.extractionBord();
 
@@ -393,7 +437,8 @@ MapHandlerGen* Surface_GenerationCage_Plugin::extractionCarte(const QString& map
 
             positionCage = mapCage->getAttribute<PFP2::VEC3, VERTEX>(attrNamesCage[0]);
         }
-        else {
+        else
+        {
             //Si l'algorithme choisi est celui du marching cube
             Algo::Surface::MC::Image<int>* image = p.m_voxellisation.getImage();   //On récupère l'image correspondant à la voxellisation
             Algo::Surface::MC::WindowingEqual<int> windowing;
@@ -402,7 +447,7 @@ MapHandlerGen* Surface_GenerationCage_Plugin::extractionCarte(const QString& map
             marching_cube.simpleMeshing();
             marching_cube.recalPoints(p.m_bb.min()-Geom::Vec3f(image->getVoxSizeX()*(p.m_dilatation+1), image->getVoxSizeY()*(p.m_dilatation+1), image->getVoxSizeZ()*(p.m_dilatation+1)));
 
-//            CGoGNout << "Temps de réalisation du Marching Cube : " << chrono.elapsed() << " ms." << CGoGNendl;
+            CGoGNout << "Temps de réalisation du Marching Cube : " << chrono.elapsed() << " ms." << CGoGNendl;
 
             delete image;
             positionCage = mapCage->getAttribute<PFP2::VEC3, VERTEX>("position");
@@ -417,8 +462,9 @@ MapHandlerGen* Surface_GenerationCage_Plugin::extractionCarte(const QString& map
     return cageHandler;
 }
 
-void Surface_GenerationCage_Plugin::calculateResolutions(const QString& mapName, const QString& positionAttributeName) {
-    MapCageParameters& p = h_parameterSet[mapName+positionAttributeName];
+void Surface_GenerationCage_Plugin::calculateResolutions(const QString& mapName, const QString& positionAttributeName)
+{
+    MapParameters& p = h_parameterSet[mapName+positionAttributeName];
 
     if(p.m_initialized) {
         MapHandler<PFP2>* mh = static_cast<MapHandler<PFP2>*>(m_schnapps->getMap(mapName));
@@ -441,7 +487,8 @@ void Surface_GenerationCage_Plugin::calculateResolutions(const QString& mapName,
         float max = std::max(std::max(delta_x, delta_y), delta_z);  //On récupère la composante qui a l'écart maximum
 
         //On adapte la résolution calculée pour qu'elle soit différente dans chacune des composantes x, y et z
-        do {
+        do
+        {
             //On recalcule les résolutions jusqu'à ce que chacune d'entre elle ne soit plus nulle
             p.m_resolutions[0] = n*delta_x/max;
             p.m_resolutions[1] = n*delta_y/max;
@@ -463,11 +510,14 @@ void Surface_GenerationCage_Plugin::calculateResolutions(const QString& mapName,
 /*
   * Fonction qui met à jour les résolutions dans chacun des composantes en fonction de la valeur choisie en x
   */
-void Surface_GenerationCage_Plugin::updateResolutions(const QString& mapName, const QString& positionAttributeName) {
-    MapCageParameters& p = h_parameterSet[mapName+positionAttributeName];
+void Surface_GenerationCage_Plugin::updateResolutions(const QString& mapName, const QString& positionAttributeName)
+{
+    MapParameters& p = h_parameterSet[mapName+positionAttributeName];
 
-    if(p.m_initialized) {
-        if(!p.m_independant) {
+    if(p.m_initialized)
+    {
+        if(!p.m_independant)
+        {
             //Si les coordonnées sont calculées de façon indépendante
             Geom::Vec3f bb_min = p.m_bb.min();
             Geom::Vec3f bb_max = p.m_bb.max();
@@ -492,7 +542,8 @@ void Surface_GenerationCage_Plugin::updateResolutions(const QString& mapName, co
             p.m_resolutions[1] = n*delta_y/max;
             p.m_resolutions[2] = n*delta_z/max;
         }
-        else {
+        else
+        {
             int res_x = m_generationCageDialog->spin_resolution_x->text().toInt();
             int res_y = m_generationCageDialog->spin_resolution_y->text().toInt();
             int res_z = m_generationCageDialog->spin_resolution_z->text().toInt();
@@ -515,18 +566,21 @@ void Surface_GenerationCage_Plugin::updateResolutions(const QString& mapName, co
 /*
   * Fonction permettant de récupérer les indices du voxel associé au sommet 'a'
   */
-Geom::Vec3i& Surface_GenerationCage_Plugin::getVoxelIndex(const QString& mapName, const QString& positionAttributeName, Geom::Vec3f a) {
-    MapCageParameters& p = h_parameterSet[mapName+positionAttributeName];
+Geom::Vec3i& Surface_GenerationCage_Plugin::getVoxelIndex(const QString& mapName, const QString& positionAttributeName, Geom::Vec3f a)
+{
+    MapParameters& p = h_parameterSet[mapName+positionAttributeName];
 
     Geom::Vec3i* voxel = new Geom::Vec3i();
 
-    if(p.m_initialized) {
+    if(p.m_initialized)
+    {
         Geom::Vec3f bb_min = p.m_bb.min();
         Geom::Vec3f bb_max = p.m_bb.max();
 
         Algo::Surface::Modelisation::swapVectorMax(bb_min, bb_max);
 
-        for(int i=0; i<3; ++i) {
+        for(int i=0; i<3; ++i)
+        {
             if(bb_max[i]-bb_min[i]>0)
                 voxel->data()[i] = p.m_voxellisation.getResolution(i)/(bb_max[i]-bb_min[i])*(a[i]-bb_min[i]);
             else

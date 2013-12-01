@@ -20,10 +20,10 @@ namespace CGoGN
 namespace SCHNApps
 {
 
-struct MapCageParameters
+struct MapParameters
 {
-    MapCageParameters();
-    ~MapCageParameters();
+    MapParameters();
+    ~MapParameters();
 
     void start();
     void stop();
@@ -96,7 +96,7 @@ private:
     QAction* m_generationCageAction;
 
 public:
-    QHash<QString, MapCageParameters> h_parameterSet;
+    QHash<QString, MapParameters> h_parameterSet;
 };
 
 } // namespace SCHNApps
