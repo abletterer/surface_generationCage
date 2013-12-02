@@ -6,7 +6,7 @@
 
 #include "Algo/MC/image.h"
 
-#include "types.h"
+#include "Topology/map/embeddedMap2.h"
 
 #include <vector>
 #include <stack>

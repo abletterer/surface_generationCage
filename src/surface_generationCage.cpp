@@ -473,10 +473,10 @@ void Surface_GenerationCage_Plugin::calculateResolutions(const QString& mapName,
         Geom::Vec3f bb_min = p.m_bb.min();
         Geom::Vec3f bb_max = p.m_bb.max();
 
-        const float SPARSE_FACTOR=0.05f;
+        const float SPARSE_FACTOR=0.005f;
 
         //Résolution calculée avec la méthode de "Automatic Generation of Coarse Bounding Cages from Dense Meshes"
-        int n = std::sqrt((selectedMap->getNbCells(VERTEX))*SPARSE_FACTOR/6);
+        int n = std::sqrt((selectedMap->getNbOrbits<VERTEX>())*SPARSE_FACTOR/6);
 
         Algo::Surface::Modelisation::swapVectorMax(bb_min, bb_max);
 
