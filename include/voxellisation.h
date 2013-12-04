@@ -575,41 +575,20 @@ class Voxellisation {
                             if(getVoxel(i,j,k)==1)
                             {
                                 //Si le voxel appartient  la surface de la cage
-                                if(getVoxel(i-1,j,k)==2)
+                                for(int ci = -1; ci<2; ++ci)
                                 {
-                                    //Si le voxel de gauche appartient  l'extrieur
-                                    addVoxel(i-1,j,k,3);
-                                    element_ajoutes.push_back(Geom::Vec3i(i-1,j,k));
-                                }
-                                if(getVoxel(i+1,j,k)==2)
-                                {
-                                    //Si le voxel de droite appartient  l'extrieur
-                                    addVoxel(i+1,j,k,3);
-                                    element_ajoutes.push_back(Geom::Vec3i(i+1,j,k));
-                                }
-                                if(getVoxel(i,j-1,k)==2)
-                                {
-                                    //Si le voxel en dessous appartient  l'extrieur
-                                    addVoxel(i,j-1,k,3);
-                                    element_ajoutes.push_back(Geom::Vec3i(i,j-1,k));
-                                }
-                                if(getVoxel(i,j+1,k)==2)
-                                {
-                                    //Si le voxel au dessous appartient  l'extrieur
-                                    addVoxel(i,j+1,k,3);
-                                    element_ajoutes.push_back(Geom::Vec3i(i,j+1,k));
-                                }
-                                if(getVoxel(i,j,k-1)==2)
-                                {
-                                    //Si le voxel de derrire appartient  l'extrieur
-                                    addVoxel(i,j,k-1,3);
-                                    element_ajoutes.push_back(Geom::Vec3i(i,j,k-1));
-                                }
-                                if(getVoxel(i,j,k+1)==2)
-                                {
-                                    //Si le voxel de devant appartient  l'extrieur
-                                    addVoxel(i,j,k+1,3);
-                                    element_ajoutes.push_back(Geom::Vec3i(i,j,k+1));
+                                    for(int cj = -1; cj<2; ++cj)
+                                    {
+                                        for(int ck = -1; ck<2; ++ck)
+                                        {
+                                            if(getVoxel(i+ci,j+cj,k+ck)==2)
+                                            {
+                                                //Si le voxel de gauche appartient  l'extrieur
+                                                addVoxel(i+ci,j+cj,k+ck,3);
+                                                element_ajoutes.push_back(Geom::Vec3i(i+ci,j+cj,k+ck));
+                                            }
+                                        }
+                                    }
                                 }
                             }
                         }
