@@ -271,7 +271,7 @@ MapHandlerGen* Surface_GenerationCage_Plugin::generationCage(const QString& mapN
         VertexAttribute<PFP2::VEC3> position = selectedMap->getAttribute<PFP2::VEC3, VERTEX>(positionAttributeName.toStdString());
         if(!position.isValid())
         {
-            CGoGNout << "L'attribut de position choisi pour la carte sélectionnée n'est pas valide." << CGoGNendl;
+            CGoGNerr << "L'attribut de position choisi pour la carte sélectionnée n'est pas valide." << CGoGNendl;
             return NULL;
         }
         p.m_bb = Algo::Geometry::computeBoundingBox<PFP2>(*selectedMap, position);
@@ -288,7 +288,8 @@ MapHandlerGen* Surface_GenerationCage_Plugin::generationCage(const QString& mapN
         voxellise(mapName, positionAttributeName);
         p.m_voxellisation.marqueVoxelsExterieurs();
         p.m_voxellisation.remplit();
-        p.m_dilatation = 0;
+        p.m_voxellisation.dilate();
+        p.m_dilatation = 1;
     }
 
     cageHandler = extractionCarte(mapName, positionAttributeName);
@@ -309,7 +310,7 @@ void Surface_GenerationCage_Plugin::voxellise(const QString& mapName, const QStr
         VertexAttribute<PFP2::VEC3> position = selectedMap->getAttribute<PFP2::VEC3, VERTEX>(positionAttributeName.toStdString());
         if(!position.isValid())
         {
-            CGoGNout << "L'attribut de position choisi pour la carte sélectionnée n'est pas valide." << CGoGNendl;
+            CGoGNerr << "L'attribut de position choisi pour la carte sélectionnée n'est pas valide." << CGoGNendl;
             return;
         }
 
@@ -364,7 +365,7 @@ void Surface_GenerationCage_Plugin::dilaterVoxellisation(const QString& mapName,
             VertexAttribute<PFP2::VEC3> position = selectedMap->getAttribute<PFP2::VEC3, VERTEX>(positionAttributeName.toStdString());
             if(!position.isValid())
             {
-                CGoGNout << "L'attribut de position choisi pour la carte sélectionnée n'est pas valide." << CGoGNendl;
+                CGoGNerr << "L'attribut de position choisi pour la carte sélectionnée n'est pas valide." << CGoGNendl;
                 return;
             }
 
@@ -386,7 +387,6 @@ void Surface_GenerationCage_Plugin::reinitialiserVoxellisation(const QString& ma
     if(p.m_initialized)
     {
         p.m_toVoxellise = true;
-        p.m_dilatation = 0;
         generationCage(mapName, positionAttributeName);
         m_generationCageDialog->updateNiveauDilatationFromPlugin(p.m_dilatation);
     }
@@ -496,10 +496,6 @@ void Surface_GenerationCage_Plugin::calculateResolutions(const QString& mapName,
             n++;
         } while(p.m_resolutions[0]==0 || p.m_resolutions[1]==0 || p.m_resolutions[2]==0);
 
-        CGoGNout << "Initialisation des résolutions : Résolution en x = " << p.m_resolutions[0]
-                 << " | Résolution en y = " << p.m_resolutions[1]
-                 << " | Résolution en z = " << p.m_resolutions[2] << CGoGNendl;
-
         m_generationCageDialog->updateResolutionsFromPlugin(p.m_resolutions);
 
         p.m_toVoxellise = true;
@@ -538,9 +534,14 @@ void Surface_GenerationCage_Plugin::updateResolutions(const QString& mapName, co
             int n = res_x*max/delta_x;
 
             //On adapte la résolution calculée pour qu'elle soit différente dans chacune des composantes x, y et z
-            p.m_resolutions[0] = n*delta_x/max;
-            p.m_resolutions[1] = n*delta_y/max;
-            p.m_resolutions[2] = n*delta_z/max;
+            do
+            {
+                //On recalcule les résolutions jusqu'à ce que chacune d'entre elle ne soit plus nulle
+                p.m_resolutions[0] = n*delta_x/max;
+                p.m_resolutions[1] = n*delta_y/max;
+                p.m_resolutions[2] = n*delta_z/max;
+                n++;
+            } while(p.m_resolutions[0]==0 || p.m_resolutions[1]==0 || p.m_resolutions[2]==0);
         }
         else
         {
@@ -551,11 +552,6 @@ void Surface_GenerationCage_Plugin::updateResolutions(const QString& mapName, co
             p.m_resolutions[1] = res_y>0?res_y:1;
             p.m_resolutions[2] = res_z>0?res_z:1;
         }
-
-        CGoGNout << "Modification des résolutions : Résolution en x = " << p.m_resolutions[0]
-                 << " | Résolution en y = " << p.m_resolutions[1]
-                 << " | Résolution en z = " << p.m_resolutions[2] << CGoGNendl;
-
         m_generationCageDialog->updateResolutionsFromPlugin(p.m_resolutions);
 
         p.m_toVoxellise = true;
