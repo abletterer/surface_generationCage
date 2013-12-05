@@ -25,6 +25,9 @@ Dialog_GenerationCage::Dialog_GenerationCage(SCHNApps* s) :
         QListWidgetItem* item = new QListWidgetItem(map->getName(), list_maps);
         item->setFlags(Qt::ItemIsSelectable | Qt::ItemIsEnabled);
     }
+    spin_resolution_x->setKeyboardTracking(false);
+    spin_resolution_y->setKeyboardTracking(false);
+    spin_resolution_z->setKeyboardTracking(false);
 }
 
 void Dialog_GenerationCage::addMapToList(MapHandlerGen* m)
